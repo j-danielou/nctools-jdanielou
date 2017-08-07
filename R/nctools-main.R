@@ -101,6 +101,8 @@ nc_subset = function(filename, varid, output, ...) {
   ncvar_put(ncNew, varid, x)
   nc_close(ncNew)
 
+  nc_close(nc)
+
   return(invisible(output))
 }
 
