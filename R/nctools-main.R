@@ -217,3 +217,47 @@ write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
 
 }
 
+#' Rename an Existing Dimension in a netCDF File
+#'
+#' @param filename
+#' @param old_dimname A string vector containing the names of the
+#' dimensions in the file that are to be renamed.
+#' @param new_dimname A string vector containing the new names of
+#' the dimensions.
+#' @param output Optional, the output file with the changes. By default,
+#' it will overwrite the old file.
+#' @param verbose If TRUE, run verbosely.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+ncdim_rename = function(filename, old_dimname, new_dimname, output, verbose=FALSE) {
+
+  if(length(old_dimname)!=length(new_dimname))
+    stop("old_dimname and new_dimname must have the same length.")
+
+  nc = nc_open(filename)
+  if(missing(output)) output = nc$filename
+  x = nc$var
+
+  for(i in seq_along(old_dimname)) {
+    x = lapply(x, FUN=.replaceInDim, dim=old_dimname[i],
+               id="name", value=new_dimname[i])
+  }
+
+  tmp = paste(output, "temp", sep=".")
+
+  ncNew = nc_create(filename = tmp, vars = x, verbose=verbose)
+  for(varid in names(nc$vars))
+    ncvar_put(ncNew, varid=varid, vals=ncvar_get(nc, varid=varid),
+              verbose=verbose)
+
+  nc_close(ncNew)
+  nc_close(nc)
+
+  file.rename(tmp, output)
+
+  return(invisible(output))
+
+}
