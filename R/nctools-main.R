@@ -11,8 +11,8 @@
 #' @examples
 nc_extract = function(filename, varid, output) {
   nc = nc_open(filename)
-  ncNew = nc_create(filename=output, vars=nc$var[[var]])
-  ncvar_put(ncNew, var, ncvar_get(nc, var, collapse_degen=FALSE))
+  ncNew = nc_create(filename=output, vars=nc$var[[varid]])
+  ncvar_put(ncNew, varid, ncvar_get(nc, varid, collapse_degen=FALSE))
   nc_close(ncNew)
   return(invisible(output))
 }
@@ -249,7 +249,7 @@ ncdim_rename = function(filename, old_dimname, new_dimname, output, verbose=FALS
   tmp = paste(output, "temp", sep=".")
 
   ncNew = nc_create(filename = tmp, vars = x, verbose=verbose)
-  for(varid in names(nc$vars))
+  for(varid in names(x))
     ncvar_put(ncNew, varid=varid, vals=ncvar_get(nc, varid=varid),
               verbose=verbose)
 
