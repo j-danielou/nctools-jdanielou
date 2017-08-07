@@ -17,7 +17,8 @@
 #' @export
 #'
 #' @examples
-nc_regrid = function(filename, varid, dim, new, mask=NULL, output) {
+nc_regrid = function(filename, varid, dim, new, mask=NULL, output, fill=FALSE,
+                     radius=1) {
 
   nc =  nc_open(filename)
   x = ncvar_get(nc, varid, collapse_degen = FALSE)
@@ -28,6 +29,8 @@ nc_regrid = function(filename, varid, dim, new, mask=NULL, output) {
   new$lon = kali::checkLongitude(new$lon)
 
   x = kali::regrid(object=x, old=old, new=new, mask=mask)
+  if(isTRUE(fill))
+    x = kali::fillMap(object=x, mask=new$mask, radius=radius, fill.value=NA)
 
   newVar = nc$var[[varid]]
   newVar$size = dim(x)
