@@ -21,4 +21,3 @@ it will overwrite the old file.}
 \description{
 Rename an Existing Dimension in a netCDF File
 }
-

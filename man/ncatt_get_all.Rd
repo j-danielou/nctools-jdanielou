@@ -18,4 +18,3 @@ A list with all the atributes.
 \description{
 Get all variable's attributes from a ncdf object
 }
-

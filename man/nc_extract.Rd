@@ -19,4 +19,3 @@ NULL, it creates the new file in the disk.
 \description{
 Create a new file with one variable from a ncdf file
 }
-

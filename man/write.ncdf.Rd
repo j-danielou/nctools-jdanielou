@@ -14,4 +14,3 @@ write.ncdf(x, filename, varid, dim, longname, units, prec = "float",
 \description{
 Data output in ncdf format
 }
-

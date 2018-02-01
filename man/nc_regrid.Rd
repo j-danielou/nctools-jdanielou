@@ -4,7 +4,8 @@
 \alias{nc_regrid}
 \title{Regrid a variable from a ncdf file}
 \usage{
-nc_regrid(filename, varid, dim, new, mask = NULL, output)
+nc_regrid(filename, varid, dim, new, mask = NULL, output, fill = FALSE,
+  radius = 1, log = TRUE, ...)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
@@ -27,4 +28,3 @@ invalid ones (e.g. 1s in the ocean, NAs in the land).}
 \description{
 Regrid a variable from a ncdf file
 }
-

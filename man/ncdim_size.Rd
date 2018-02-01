@@ -15,4 +15,3 @@ A named list with the dimensions of the variables.
 \description{
 Get the dimensions of the variables in a ncdf object.
 }
-

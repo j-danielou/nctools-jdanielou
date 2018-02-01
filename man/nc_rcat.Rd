@@ -19,4 +19,3 @@ NULL, it creates the new file in the disk.
 \description{
 Concatenate records of the same variable from different ncdf files
 }
-

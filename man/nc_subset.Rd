@@ -7,9 +7,14 @@
 nc_subset(filename, varid, output, ...)
 }
 \arguments{
+\item{filename}{The name of the ncdf file to subset.}
+
+\item{varid}{The name of the variable to subset. If missing and only one variable in the file, that one is used.}
+
+\item{output}{The name of the ncdf output file to create.}
+
 \item{...}{}
 }
 \description{
 Subset a ncdf variable
 }
-

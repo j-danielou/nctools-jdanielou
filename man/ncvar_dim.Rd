@@ -14,4 +14,3 @@ ncvar_dim(nc, varid = NULL, value = FALSE)
 \description{
 Get dimension names for each variable in a ncdf file
 }
-

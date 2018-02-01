@@ -12,4 +12,3 @@ ncdim_isUnlim(nc)
 \description{
 Is the dimention unlimited?
 }
-
