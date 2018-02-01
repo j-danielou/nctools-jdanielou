@@ -52,9 +52,9 @@ nc_rcat = function(filenames, varid, output) {
 
 #' Subset a ncdf variable
 #'
-#' @param filename
-#' @param varid
-#' @param output
+#' @param filename The name of the ncdf file to subset.
+#' @param varid The name of the variable to subset. If missing and only one variable in the file, that one is used.
+#' @param output The name of the ncdf output file to create.
 #' @param ...
 #'
 #' @return
@@ -65,23 +65,41 @@ nc_subset = function(filename, varid, output, ...) {
 
   bounds = list(...)
   nc = nc_open(filename)
-  x  = ncvar_get(nc, varid, collapse_degen=FALSE)
-  dims = ncvar_dim(nc, varid, value=TRUE)
-  dimnames(x) = dims
 
-  .isInside = function(x, bound) {
+  if(missing(varid)) {
+    msg = sprintf("ncdf file has more than one variable (%s), argument 'varid' must be specified.",
+                  paste(sQuote(names(nc$var)), collapse=", "))
+    if(length(nc$var)>1) stop(msg)
+    varid = names(nc$var)[1]
+  }
+
+  dims = ncvar_dim(nc, varid, value=TRUE)
+
+  .getIndex = function(x, bound, FUN, default=1) {
+    FUN = match.fun(FUN)
     # longitude in a torus
-    if(is.null(bound)) return(TRUE)
+    if(is.null(bound)) return(default)
     if(diff(bound)<0) stop("Upper bound is lower than lower bound.")
     out = which((x>=bound[1]) & (x<=bound[2]))
-    return(out)
+    if(length(out)==0)
+      stop(sprintf("All index are out of bounds: (%s).",
+                   paste(bound, collapse=", ")))
+    return(FUN(out))
   }
 
   index = setNames(lapply(names(dims),
-                          function(x) .isInside(dims[[x]], bounds[[x]])),
+                          function(x) .getIndex(dims[[x]], bounds[[x]], FUN=identity, default=TRUE)),
                    names(dims))
 
-  x = do.call("[", c(list(x), index))
+  start = setNames(sapply(names(dims),
+                          function(x) .getIndex(dims[[x]], bounds[[x]], FUN=min, default=1)),
+                   names(dims))
+
+  count = setNames(sapply(names(dims),
+                          function(x) .getIndex(dims[[x]], bounds[[x]], FUN=length, default=-1)),
+                   names(dims))
+
+  x  = ncvar_get(nc, varid, collapse_degen=FALSE, start=start, count=count)
 
   newVar = nc$var[[varid]]
   newVar$size = dim(x)
@@ -105,7 +123,6 @@ nc_subset = function(filename, varid, output, ...) {
 
   return(invisible(output))
 }
-
 
 
 #' Make a dimension unlimited
