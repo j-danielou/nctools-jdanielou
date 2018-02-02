@@ -1,4 +1,7 @@
 
+# Main functions for ncdf files -------------------------------------------
+
+
 #' Create a new file with one variable from a ncdf file
 #'
 #' @param filename The filename of the original ncdf file.
@@ -11,11 +14,77 @@
 #' @examples
 nc_extract = function(filename, varid, output) {
   nc = nc_open(filename)
+  on.exit(nc_close(nc))
   ncNew = nc_create(filename=output, vars=nc$var[[varid]])
+  on.exit(try(nc_close(ncNew), silent = TRUE), add=TRUE)
   ncvar_put(ncNew, varid, ncvar_get(nc, varid, collapse_degen=FALSE))
   nc_close(ncNew)
   return(invisible(output))
 }
+
+#' Renaming variable and dimensions in a netCDF File
+#'
+#' @param filename The filename of the original ncdf file.
+#' @param oldnames A string vector containing the names of the
+#' variable or dimensions in the file that are to be renamed.
+#' @param newnames A string vector containing the new names of
+#' the variables or dimensions.
+#' @param output Optional, the output file with the changes. By default,
+#' it will overwrite the old file.
+#' @param verbose If TRUE, run verbosely.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+nc_rename = function(filename, oldnames, newnames, output, verbose=FALSE) {
+
+  ncc = nc_open(filename)
+  on.exit(try(nc_close(ncc), silent = TRUE))
+
+  vars = names(nc$var)
+  dims = names(nc$dim)
+
+  gv = which(oldnames %in% vars)
+  gd = which(oldnames %in% dims)
+  nm = which(!(oldnames %in% c(vars, dims)))
+
+  msgV = paste(sQuote(oldnames[gv]), sQuote(newnames[gv]), sep=" -> ", collapse="\n")
+  msgD = paste(sQuote(oldnames[gd]), sQuote(newnames[gd]), sep=" -> ", collapse="\n")
+  msgN = sprintf("Some of the 'oldnames' (%s) were not found in variables or dimensions.",
+                 paste(sQuote(oldnames[nm]), collapse=", "))
+
+  if(length(nm)>0) warning(msgN)
+
+  old_varname = oldnames[gv]
+  new_varname = newnames[gv]
+  old_dimname = oldnames[gd]
+  new_dimname = newnames[gd]
+
+  nc_close(ncc)
+
+  if(length(old_varname)>0) {
+
+    if(isTRUE(verbose)) cat("Changing variable names:\n", msgV, "\n",sep="")
+
+    filename = .nc_renameVar(filename=filename, oldname=old_varname,
+                             newname=new_varname, output=output, verbose=verbose)
+
+  }
+
+  if(length(old_dimname)>0) {
+
+    if(isTRUE(verbose)) cat("Changing dimension names:\n", msgD, "\n",sep="")
+
+    output  = .nc_renameDim(filename=filename, oldname=old_varname,
+                            newname=new_varname, output=output, verbose=verbose)
+
+  }
+
+  return(invisible(output))
+
+}
+
 
 #' Concatenate records of the same variable from different ncdf files
 #'
@@ -136,7 +205,7 @@ nc_subset = function(filename, varid, output, ...) {
 #' @export
 #'
 #' @examples
-ncdim_unlim = function(filename, unlim, output=NULL) {
+nc_unlim = function(filename, unlim, output=NULL) {
   # open ncdf connection
   if(is.null(output)) output = filename
   outputTemp = paste(output, ".temp", sep="")
@@ -166,7 +235,6 @@ ncdim_unlim = function(filename, unlim, output=NULL) {
   return(invisible(newVars))
 
 }
-
 
 
 # Extra tools -------------------------------------------------------------
@@ -231,50 +299,5 @@ write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
   nc_close(ncNew)
 
   return(invisible(filename))
-
-}
-
-#' Rename an Existing Dimension in a netCDF File
-#'
-#' @param filename
-#' @param old_dimname A string vector containing the names of the
-#' dimensions in the file that are to be renamed.
-#' @param new_dimname A string vector containing the new names of
-#' the dimensions.
-#' @param output Optional, the output file with the changes. By default,
-#' it will overwrite the old file.
-#' @param verbose If TRUE, run verbosely.
-#'
-#' @return
-#' @export
-#'
-#' @examples
-ncdim_rename = function(filename, old_dimname, new_dimname, output, verbose=FALSE) {
-
-  if(length(old_dimname)!=length(new_dimname))
-    stop("old_dimname and new_dimname must have the same length.")
-
-  nc = nc_open(filename)
-  if(missing(output)) output = nc$filename
-  x = nc$var
-
-  for(i in seq_along(old_dimname)) {
-    x = lapply(x, FUN=.replaceInDim, dim=old_dimname[i],
-               id="name", value=new_dimname[i])
-  }
-
-  tmp = paste(output, "temp", sep=".")
-
-  ncNew = nc_create(filename = tmp, vars = x, verbose=verbose)
-  for(varid in names(x))
-    ncvar_put(ncNew, varid=varid, vals=ncvar_get(nc, varid=varid),
-              verbose=verbose)
-
-  nc_close(ncNew)
-  nc_close(nc)
-
-  file.rename(tmp, output)
-
-  return(invisible(output))
 
 }
