@@ -76,8 +76,8 @@ nc_rename = function(filename, oldnames, newnames, output, verbose=FALSE) {
 
     if(isTRUE(verbose)) cat("Changing dimension names:\n", msgD, "\n",sep="")
 
-    output  = .nc_renameDim(filename=filename, oldname=old_varname,
-                            newname=new_varname, output=output, verbose=verbose)
+    output  = .nc_renameDim(filename=filename, oldname=old_dimname,
+                            newname=new_dimname, output=output, verbose=verbose)
 
   }
 

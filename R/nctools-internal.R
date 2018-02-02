@@ -17,22 +17,18 @@
     stop("oldname and newname must have the same length.")
 
   nc = nc_open(filename)
-  on.exit(try(nc_close(nc), silent=TRUE))
-
-  if(missing(output)) output = filename
+  if(missing(output)) output = nc$filename
+  x = nc$var
 
   for(i in seq_along(oldname)) {
-
-    nc$var = lapply(nc$var, FUN=.replaceInDim, dim=oldname[i],
+    x = lapply(x, FUN=.replaceInDim, dim=oldname[i],
                id="name", value=newname[i])
-
   }
 
   tmp = paste(output, "temp", sep=".")
 
-  ncNew = nc_create(filename = tmp, vars = nc$var, verbose=verbose)
-  on.exit(try(nc_close(ncNew), silent=TRUE), add=TRUE)
-  for(varid in names(nc$var))
+  ncNew = nc_create(filename = tmp, vars = x, verbose=verbose)
+  for(varid in names(x))
     ncvar_put(ncNew, varid=varid, vals=ncvar_get(nc, varid=varid),
               verbose=verbose)
 
@@ -40,7 +36,6 @@
   nc_close(nc)
 
   file.rename(tmp, output)
-  on.exit(try(file.remove(tmp), silent=TRUE), add=TRUE)
 
   return(invisible(output))
 
@@ -59,7 +54,7 @@
   }
 
   nc = nc_open(filename, write=TRUE)
-  on.exit(try(nc_close(nc), silent = TRUE))
+  # on.exit(try(nc_close(nc), silent = TRUE))
 
   for(i in seq_along(oldname)) {
 
