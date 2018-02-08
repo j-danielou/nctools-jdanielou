@@ -16,7 +16,6 @@ nc_extract = function(filename, varid, output) {
   nc = nc_open(filename)
   on.exit(nc_close(nc))
   ncNew = nc_create(filename=output, vars=nc$var[[varid]])
-  on.exit(try(nc_close(ncNew), silent = TRUE), add=TRUE)
   ncvar_put(ncNew, varid, ncvar_get(nc, varid, collapse_degen=FALSE))
   nc_close(ncNew)
   return(invisible(output))
@@ -37,16 +36,34 @@ nc_extract = function(filename, varid, output) {
 #' @export
 #'
 #' @examples
-nc_rename = function(filename, oldnames, newnames, output, verbose=FALSE) {
+nc_rename = function(filename, oldnames, newnames, output, verbose=FALSE, overwrite=FALSE) {
+
+  if(missing(output) & !isTRUE(overwrite))
+    stop("output file is missing. Set 'overwrite' to TRUE to make changes in the original file.")
+
+  if(missing(output)) output = filename
+
+  if(file.exists(output) & !isTRUE(overwrite))
+    stop("output file already exists. Set 'overwrite' to TRUE.")
+
+  tmp = paste(output, ".temp", sep="")
+  on.exit(if(file.exists(tmp)) file.remove(tmp))
 
   ncc = nc_open(filename)
-  on.exit(try(nc_close(ncc), silent = TRUE))
 
-  vars = names(nc$var)
-  dims = names(nc$dim)
+  vars = names(ncc$var)
+  dims = names(ncc$dim)
+
+  nc_close(ncc)
 
   gv = which(oldnames %in% vars)
   gd = which(oldnames %in% dims)
+
+  if(length(gv)==0 & length(gd)==0) {
+    message("Nothing to change. Exiting...")
+    return(invisible())
+  }
+
   nm = which(!(oldnames %in% c(vars, dims)))
 
   msgV = paste(sQuote(oldnames[gv]), sQuote(newnames[gv]), sep=" -> ", collapse="\n")
@@ -61,25 +78,27 @@ nc_rename = function(filename, oldnames, newnames, output, verbose=FALSE) {
   old_dimname = oldnames[gd]
   new_dimname = newnames[gd]
 
-  nc_close(ncc)
+
+  if(length(old_dimname)>0) {
+
+    if(isTRUE(verbose)) cat("Changing dimension names:\n", msgD, "\n",sep="")
+
+    filename  = .nc_renameDim(filename=filename, oldname=old_dimname,
+                            newname=new_dimname, output=tmp, verbose=FALSE)
+
+  }
 
   if(length(old_varname)>0) {
 
     if(isTRUE(verbose)) cat("Changing variable names:\n", msgV, "\n",sep="")
 
     filename = .nc_renameVar(filename=filename, oldname=old_varname,
-                             newname=new_varname, output=output, verbose=verbose)
+                             newname=new_varname, output=tmp, verbose=FALSE)
 
   }
 
-  if(length(old_dimname)>0) {
-
-    if(isTRUE(verbose)) cat("Changing dimension names:\n", msgD, "\n",sep="")
-
-    output  = .nc_renameDim(filename=filename, oldname=old_dimname,
-                            newname=new_dimname, output=output, verbose=verbose)
-
-  }
+  if(file.exists(output)) file.remove(output)
+  file.rename(tmp, output)
 
   return(invisible(output))
 
@@ -124,15 +143,21 @@ nc_rcat = function(filenames, varid, output) {
 #' @param filename The name of the ncdf file to subset.
 #' @param varid The name of the variable to subset. If missing and only one variable in the file, that one is used.
 #' @param output The name of the ncdf output file to create.
-#' @param ...
+#' @param newvarid New name for varid in the output file.
+#' @param compression Compression level for the new variable (forces ncdf v4).
+#' @param force_v4 Logical. Should the resulting file be ncdf v4?
+#' @param ... the dimensions and bounds of values to subset.
+#' @param ignore.case Logical. Ignore case when matching the dimensions?
 #'
 #' @return
 #' @export
 #'
 #' @examples
-nc_subset = function(filename, varid, output, ...) {
+nc_subset = function(filename, varid, output, newvarid, compression,
+                     force_v4=FALSE, ..., ignore.case=FALSE) {
 
   bounds = list(...)
+  if(isTRUE(ignore.case)) names(bounds) = tolower(names(bounds))
   nc = nc_open(filename)
 
   if(missing(varid)) {
@@ -142,7 +167,19 @@ nc_subset = function(filename, varid, output, ...) {
     varid = names(nc$var)[1]
   }
 
+  if(missing(newvarid)) newvarid = varid
+
   dims = ncvar_dim(nc, varid, value=TRUE)
+  dimNames = names(dims)
+
+  if(isTRUE(ignore.case)) names(dims) = tolower(names(dims))
+
+  check = any(names(bounds) %in% names(dims), na.rm=TRUE)
+
+  if(!isTRUE(check)) {
+    warning("Dimensions to subset don't match, nothing to do.")
+    return(invisible())
+  }
 
   .getIndex = function(x, bound, FUN, default=1) {
     FUN = match.fun(FUN)
@@ -158,7 +195,7 @@ nc_subset = function(filename, varid, output, ...) {
 
   index = setNames(lapply(names(dims),
                           function(x) .getIndex(dims[[x]], bounds[[x]], FUN=identity, default=TRUE)),
-                   names(dims))
+                   dimNames) # keep original names
 
   start = setNames(sapply(names(dims),
                           function(x) .getIndex(dims[[x]], bounds[[x]], FUN=min, default=1)),
@@ -172,6 +209,8 @@ nc_subset = function(filename, varid, output, ...) {
 
   newVar = nc$var[[varid]]
   newVar$size = dim(x)
+  newVar$name = newvarid
+  if(!missing(compression)) newVar$compression = compression
   newVar$chunksizes = NA
 
   .modifyDim = function(x, dim, index) {
@@ -183,9 +222,23 @@ nc_subset = function(filename, varid, output, ...) {
   }
 
   newVar$dim = lapply(names(nc$dim), FUN=.modifyDim, dim=nc$dim, index=index)
+  newVar$dim = newVar$dim[newVar$dimids + 1]
 
-  ncNew = nc_create(filename=output, vars=newVar)
-  ncvar_put(ncNew, varid, x)
+  ncNew = nc_create(filename=output, vars=newVar, force_v4=force_v4)
+  ncvar_put(ncNew, newvarid, x)
+
+  globalAtt = ncatt_get(nc, varid=0)
+
+  xcall = paste(gsub(x=gsub(x=capture.output(match.call()),
+                     pattern="^[ ]*", replacement=""), pattern="\"",
+               replacement="'"), collapse="")
+
+  globalAtt$history = sprintf("%s: %s [nctools version %s, %s]",
+                              date(), xcall, packageVersion("nctools"), R.version.string)
+
+  # copy global attributes from original nc file.
+  ncatt_put_all(ncNew, varid=0, attval=globalAtt)
+
   nc_close(ncNew)
 
   nc_close(nc)
@@ -210,6 +263,7 @@ nc_unlim = function(filename, unlim, output=NULL) {
   if(is.null(output)) output = filename
   outputTemp = paste(output, ".temp", sep="")
   nc = nc_open(filename)
+  on.exit(nc_close(nc))
 
   .makeUnlim = function(x, unlim) {
     names(x$dim) = sapply(x$dim, "[[", "name")
@@ -228,7 +282,6 @@ nc_unlim = function(filename, unlim, output=NULL) {
     ncvar_put(ncNew, iVar, ncvar_get(nc, iVar, collapse_degen=FALSE))
 
   nc_close(ncNew)
-  nc_close(nc)
 
   renameFlag = file.rename(outputTemp, output)
 

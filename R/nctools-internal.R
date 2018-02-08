@@ -13,11 +13,23 @@
 
 .nc_renameDim = function(filename, oldname, newname, output, verbose=FALSE) {
 
+  tmp = paste(output, "temp", sep=".")
+  on.exit(if(file.exists(tmp)) file.remove(tmp))
+
   if(length(oldname)!=length(newname))
     stop("oldname and newname must have the same length.")
 
   nc = nc_open(filename)
-  if(missing(output)) output = nc$filename
+  is_v4 = grepl(x=nc$format, pattern="NETCDF4")
+
+  if(is_v4) {
+    varids = names(nc$var)
+    for(varid in varids) {
+      if(is.na(ncvar_compression(nc, varid)))
+        nc = ncvar_change_compression(nc, varid, compression = 9)
+    }
+  }
+
   x = nc$var
 
   for(i in seq_along(oldname)) {
@@ -25,17 +37,30 @@
                id="name", value=newname[i])
   }
 
-  tmp = paste(output, "temp", sep=".")
 
-  ncNew = nc_create(filename = tmp, vars = x, verbose=verbose)
+  ncNew = nc_create(filename = tmp, vars = x, verbose=verbose,
+                    force_v4 = is_v4)
+
   for(varid in names(x))
     ncvar_put(ncNew, varid=varid, vals=ncvar_get(nc, varid=varid),
               verbose=verbose)
 
+  # copy global attributes from original nc file.
+  ncatt_put_all(ncNew, varid=0, attval=ncatt_get(nc, varid=0))
+
   nc_close(ncNew)
   nc_close(nc)
 
-  file.rename(tmp, output)
+  renamed = file.rename(tmp, output)
+
+  if(!renamed) {
+    file.remove(output)
+    renamed = file.rename(tmp, output)
+    if(!renamed) {
+      file.remove(tmp)
+      stop(sprintf("Couldn't write %s.", output))
+    }
+  }
 
   return(invisible(output))
 
@@ -46,15 +71,13 @@
   if(length(oldname)!=length(newname))
     stop("oldname and newname must have the same length.")
 
-  if(missing(output)) output = filename
-
   if(output!=filename) {
     file.copy(from=filename, to=output, overwrite = TRUE)
     filename = output
   }
 
   nc = nc_open(filename, write=TRUE)
-  # on.exit(try(nc_close(nc), silent = TRUE))
+  on.exit(try(nc_close(nc), silent = TRUE))
 
   for(i in seq_along(oldname)) {
 
@@ -63,8 +86,16 @@
 
   }
 
-  nc_close(nc)
+  # nc_close(nc)
 
   return(invisible(output))
 
+}
+
+.getCompression = function(x) return(x$compression)
+
+.setCompression = function(x, compression) {
+  x$compression = compression
+  x$chunksizes = NA
+  return(x)
 }
