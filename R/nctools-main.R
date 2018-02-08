@@ -290,9 +290,9 @@ nc_unlim = function(filename, unlim, output=NULL) {
 }
 
 
-#' Apply Functions Over Dimensions of a ncdf variable.
+#' Apply Functions Over Dimensions of a netCDF variable.
 #'
-#' @param filename
+#' @param filename Name of the existing netCDF file to be opened.
 #' @param varid What variable to read the data from. Can be a string with the
 #' name of the variable or an object of class ncvar4. If set to NA,
 #' the function will determine if there is only one variable in the file and,
@@ -303,8 +303,11 @@ nc_unlim = function(filename, unlim, output=NULL) {
 #' @param ... optional arguments to FUN.
 #' @param output Name of the file to save results.
 #' @param drop Logical. Drop degenered dimensions (i.e. dimensions of length 1)? Not implemented.
-#' @param ansVals the values to be assigned a the dimension resulting from the
+#' @param newdim the values to be assigned a the dimension resulting from the
 #' application of FUN.
+#' @param name new name of the resulting variable. If NULL (by default), the original name is kept.
+#' @param longname long name of the resulting variable.
+#' @param units units of the resulting variable.
 #' @param compression If set to an integer between 1 (least compression) and 9 (most compression), this enables compression for the variable as it is written to the file. Turning compression on forces the created file to be in netcdf version 4 format, which will not be compatible with older software that only reads netcdf version 3 files.
 #' @param verbose Print debugging information.
 #' @param force_v4 If TRUE, then the created output file will always be in netcdf-4 format (which supports more features, but cannot be read by version 3 of the netcdf library). If FALSE, then the file is created in netcdf version 3 format UNLESS the user has requested features that require version 4. Deafult is TRUE.
@@ -315,10 +318,15 @@ nc_unlim = function(filename, unlim, output=NULL) {
 #'
 #' @examples
 nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
-                    ansVals = NULL, compression=NA, verbose=FALSE, force_v4=TRUE,
+                    newdim = NULL, name=NULL, longname=NULL, units=NULL,
+                    compression=NA, verbose=FALSE, force_v4=TRUE,
                     ignore.case=FALSE) {
 
+
   funName = deparse(substitute(FUN))
+
+  if(is.null(output)) stop("You must specify an 'output'file.")
+
   FUN = match.fun(FUN)
 
   nc = nc_open(filename)
@@ -387,9 +395,15 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 
   # drop for tomorrow
 
-  newVar = ncvar_def(name = oldVar$name, units = oldVar$units,
+  xlongname = sprintf("%s of %s", funName, oldVar$longname)
+
+  varLongname = if(is.null(longname)) xlongname else longname
+  varName  = if(is.null(name)) oldVar$name else name
+  varUnits = if(is.null(units)) oldVar$units else units
+
+  newVar = ncvar_def(name=varName, units = varUnits,
                      missval = oldVar$missval, dim = newDim,
-                     longname = oldVar$longname, prec = oldVar$prec,
+                     longname = varLongname, prec = oldVar$prec,
                      compression = oldVar$compression)
 
   ncNew = nc_create(filename=output, vars=newVar)
