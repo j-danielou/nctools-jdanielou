@@ -14,7 +14,7 @@ newfunctions:
 - nc_min, nc_max
 - nc_sd
 - nc_fivenums (save 5 variables, varid_mxx)
-
+- group all them in one help page! 
 
 - add basic arithmetics?
 
