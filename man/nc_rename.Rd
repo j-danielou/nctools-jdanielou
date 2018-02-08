@@ -4,7 +4,8 @@
 \alias{nc_rename}
 \title{Renaming variable and dimensions in a netCDF File}
 \usage{
-nc_rename(filename, oldnames, newnames, output, verbose = FALSE)
+nc_rename(filename, oldnames, newnames, output, verbose = FALSE,
+  overwrite = FALSE)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
