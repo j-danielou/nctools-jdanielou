@@ -81,7 +81,6 @@ ncvar_compression = function(nc, varid=NA) {
 #' @param compression The new compression value.
 #'
 #' @return
-#' @export
 #'
 #' @examples
 ncvar_change_compression = function(nc, varid=NA, compression) {
@@ -157,6 +156,7 @@ ncatt_get_all = function(nc, type=c("var", "dim")) {
   names(vars) = vars
   atts = lapply(vars, FUN=function(var) ncatt_get(nc, var))
   return(atts)
+
 }
 
 #' Put several attributes to a ncdf object
