@@ -290,6 +290,117 @@ nc_unlim = function(filename, unlim, output=NULL) {
 }
 
 
+#' Apply Functions Over Dimensions of a ncdf variable.
+#'
+#' @param filename
+#' @param varid What variable to read the data from. Can be a string with the
+#' name of the variable or an object of class ncvar4. If set to NA,
+#' the function will determine if there is only one variable in the file and,
+#' if so, read from that, but if there are multiple variables in the file, an error is generated.
+#' @param MARGIN a vector giving the dimensions which the function will be applied over.
+#' It can be a character vector selecting dimension names.
+#' @param FUN the function to be applied
+#' @param ... optional arguments to FUN.
+#' @param output Name of the file to save results.
+#' @param drop Logical. Drop degenered dimensions (i.e. dimensions of length 1)? Not implemented.
+#' @param ansVals the values to be assigned a the dimension resulting from the
+#' application of FUN.
+#' @param compression If set to an integer between 1 (least compression) and 9 (most compression), this enables compression for the variable as it is written to the file. Turning compression on forces the created file to be in netcdf version 4 format, which will not be compatible with older software that only reads netcdf version 3 files.
+#' @param verbose Print debugging information.
+#' @param force_v4 If TRUE, then the created output file will always be in netcdf-4 format (which supports more features, but cannot be read by version 3 of the netcdf library). If FALSE, then the file is created in netcdf version 3 format UNLESS the user has requested features that require version 4. Deafult is TRUE.
+#' @param ignore.case If TRUE, ignore case in matching dimension names and MARGIN. Default is FALSE.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
+                    ansVals = NULL, compression=NA, verbose=FALSE, force_v4=TRUE,
+                    ignore.case=FALSE) {
+
+  funName = deparse(substitute(FUN))
+  FUN = match.fun(FUN)
+
+  nc = nc_open(filename)
+  on.exit(nc_close(nc))
+
+  if(is.na(varid)) {
+    if(length(nc$var)==1) varid = nc$var[[1]]$name
+    msg = sprintf("Several variables found in %s, must specify 'varid'.", filename)
+    if(length(nc$var)>1) stop(msg)
+  }
+
+  if(inherits(varid, "ncvar4")) varid = varid$name
+
+  X = ncvar_get(nc, varid, collapse_degen = FALSE)
+
+  dn = ncvar_dim(nc, varid, value=TRUE)
+  dnn = if(isTRUE(ignore.case)) tolower(names(dn)) else names(dn)
+
+  if (is.character(MARGIN)) {
+    if(isTRUE(ignore.case)) MARGIN = tolower(MARGIN)
+    MARGIN <- match(MARGIN, dnn)
+    if(anyNA(MARGIN))
+      stop("not all elements of 'MARGIN' are names of dimensions")
+  }
+
+  Y = apply(X=X, MARGIN = MARGIN, FUN = FUN, ...)
+
+  lans = length(Y)/prod(dim(X)[MARGIN]) # length of the answer (FUN)
+
+  if(is.null(ansVals)) {
+
+    if(lans>1) {
+      vals = suppressWarnings(as.numeric(dimnames(Y)[[1]]))
+      ansVals = if(all(!is.na(vals))) vals else seq_len(lans)
+    } else {
+      ansVals = seq_len(lans)
+    }
+
+  } # make ansVals from answer
+
+  if(length(ansVals)!=lans) {
+    msg = sprintf("The length of ansVals (%s) doesn't match answer length (%s), ignoring ansVals.",
+                  length(ansVals), lans)
+    warning(msg)
+    ansVals = seq_len(lans)
+  }
+  if(!is.numeric(ansVals)) {
+    warning("The argument ansVals must be numeric, ignoring ansVals.")
+    ansVals = seq_len(lans)
+  }
+
+  oldVar = nc$var[[varid]]
+  newDim = nc$dim[(oldVar$dimids + 1)[MARGIN]]
+
+  if(!is.na(compression)) oldVar$compression = compression
+
+  if(lans>1) {
+
+    Y = aperm(Y, perm = c(seq_along(dim(Y))[-1], 1))
+
+    ansDim = ncdim_def(name=funName, units="", vals=ansVals)
+    newDim = c(newDim, list(ansDim))
+    names(newDim)[length(MARGIN)+1] = funName
+
+  }
+
+  # drop for tomorrow
+
+  newVar = ncvar_def(name = oldVar$name, units = oldVar$units,
+                     missval = oldVar$missval, dim = newDim,
+                     longname = oldVar$longname, prec = oldVar$prec,
+                     compression = oldVar$compression)
+
+  ncNew = nc_create(filename=output, vars=newVar)
+  ncvar_put(ncNew, varid, Y)
+  nc_close(ncNew)
+
+  return(invisible(output))
+
+}
+
+
 # Extra tools -------------------------------------------------------------
 
 #' Data output in ncdf format
