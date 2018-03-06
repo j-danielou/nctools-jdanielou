@@ -1,9 +1,10 @@
 
-#' Title
+#' Check and correct Longitude values given the position of the Prime Meridian (International Reference Meridian)
 #'
-#' @param x
-#' @param primeMeridian
-#' @param sort
+#' @param x numeric vector of longitude values.
+#' @param primeMeridian position of the Prime Meridian. Use "center" for [-180,180]
+#' range values and "left" for [0,360] range (Pacific centered).
+#' @param sort sort longitude values?
 #' @param ...
 #'
 #' @return
@@ -36,9 +37,18 @@ checkLongitude = function(x, primeMeridian="center", sort=FALSE, ...) {
 }
 
 
+#' Find the Prime Meridian
+#'
+#' @param x numeric vector of longitude values.
+#'
+#' @return
+#' @export
+#'
+#' @examples
 findPrimeMeridian = function(x) {
   if(any(x<0)) return("center")
   if(any(x>180)) return("left")
-  return("center")
+  warning("Indeterminate Prime Meridian from longitude values.")
+  return(NULL)
 }
 
