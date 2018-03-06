@@ -31,6 +31,7 @@ nc_extract = function(filename, varid, output) {
 #' @param output Optional, the output file with the changes. By default,
 #' it will overwrite the old file.
 #' @param verbose If TRUE, run verbosely.
+#' @param overwrite overwrite output file if already exists?
 #'
 #' @return
 #' @export
@@ -122,14 +123,22 @@ nc_rcat = function(filenames, varid, output) {
     nc = nc_open(filenames[i])
     if(!any(ncdim_isUnlim(nc))) stop("Files don't have an unlimited dimension.")
     if(i==1) {
-      isUnlim = ncdim_isUnlim(nc)[ncvar_dim(nc)[[varid]]]
+      isUnlim  = ncdim_isUnlim(nc)[ncvar_dim(nc)[[varid]]]
+      unlimDim = names(nc$dim)[which(ncdim_isUnlim(nc))]
       ncNew = nc_create(filename=output, vars=nc$var[[varid]])
       start = rep(1, length(isUnlim))
+      refSize = nc$var[[varid]]$size[which(!isUnlim)]
     }
     ncSize = nc$var[[varid]]$size
+    if(!identical(ncSize[which(!isUnlim)], refSize))
+      stop("File dimensions doesn't match.")
     count = ncSize*isUnlim -1*!isUnlim
+    # add values to varid
     ncvar_put(ncNew, varid, ncvar_get(nc, varid, collapse_degen=FALSE),
-              start=start, count=count)
+              start=start, count=ncSize)
+    # add values to unlimited dimension
+    ncvar_put(ncNew, varid=unlimDim, ncvar_get(nc, varid=unlimDim),
+              start=start[which(isUnlim)], count=ncSize[which(isUnlim)])
     start = start + ncSize*isUnlim
     nc_close(nc)
   }
@@ -356,26 +365,26 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 
   lans = length(Y)/prod(dim(X)[MARGIN]) # length of the answer (FUN)
 
-  if(is.null(ansVals)) {
+  if(is.null(newdim)) {
 
     if(lans>1) {
       vals = suppressWarnings(as.numeric(dimnames(Y)[[1]]))
-      ansVals = if(all(!is.na(vals))) vals else seq_len(lans)
+      newdim = if(all(!is.na(vals))) vals else seq_len(lans)
     } else {
-      ansVals = seq_len(lans)
+      newdim = seq_len(lans)
     }
 
-  } # make ansVals from answer
+  } # make newdim from answer
 
-  if(length(ansVals)!=lans) {
-    msg = sprintf("The length of ansVals (%s) doesn't match answer length (%s), ignoring ansVals.",
-                  length(ansVals), lans)
+  if(length(newdim)!=lans) {
+    msg = sprintf("The length of newdim (%s) doesn't match answer length (%s), ignoring newdim.",
+                  length(newdim), lans)
     warning(msg)
-    ansVals = seq_len(lans)
+    newdim = seq_len(lans)
   }
-  if(!is.numeric(ansVals)) {
-    warning("The argument ansVals must be numeric, ignoring ansVals.")
-    ansVals = seq_len(lans)
+  if(!is.numeric(newdim)) {
+    warning("The argument newdim must be numeric, ignoring newdim.")
+    newdim = seq_len(lans)
   }
 
   oldVar = nc$var[[varid]]
@@ -387,7 +396,7 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 
     Y = aperm(Y, perm = c(seq_along(dim(Y))[-1], 1))
 
-    ansDim = ncdim_def(name=funName, units="", vals=ansVals)
+    ansDim = ncdim_def(name=funName, units="", vals=newdim)
     newDim = c(newDim, list(ansDim))
     names(newDim)[length(MARGIN)+1] = funName
 
@@ -419,13 +428,13 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 
 #' Data output in ncdf format
 #'
-#' @param x
-#' @param filename
-#' @param varid
-#' @param dim
-#' @param longname
-#' @param units
-#' @param prec
+#' @param x An array to write to a ncdf file.
+#' @param filename The file to write.
+#' @param varid The name of the variable in the ncdf file.
+#' @param dim A list with the values of the dimensions. Names are taken from the list.
+#' @param longname The longname for the variable to be created.
+#' @param units The units for the variable to be created.
+#' @param prec The precision for the variable to be created.
 #' @param missval
 #' @param compression
 #' @param chunksizes
@@ -479,3 +488,4 @@ write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
   return(invisible(filename))
 
 }
+
