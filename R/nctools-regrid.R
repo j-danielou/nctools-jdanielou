@@ -38,9 +38,9 @@ nc_regrid = function(filename, varid, dim, new, mask=NULL, output, fill=FALSE,
   if(isTRUE(log)) x = log(x + 1e-4)
 
   if(!isTRUE(fill)) {
-    x = kali::regrid(object=x, old=old, new=new, mask=mask)
+    x = regrid(object=x, old=old, new=new, mask=mask)
   } else {
-    x = kali::regrid2(object=x, old=old, new=new, mask=mask, ...)
+    x = regrid2(object=x, old=old, new=new, mask=mask, ...)
   }
 
   newVar = nc$var[[varid]]
@@ -74,11 +74,11 @@ nc_regrid = function(filename, varid, dim, new, mask=NULL, output, fill=FALSE,
 
 # regrid ------------------------------------------------------------------
 
-
 regrid = function(object, old, new, mask, ...) {
   UseMethod("regrid")
 }
 
+#' @export
 regrid.matrix = function(object, old, new, mask=NULL, ...) {
 
   if(is.null(mask)&!is.null(new$mask)) mask=new$mask
@@ -96,13 +96,14 @@ regrid.matrix = function(object, old, new, mask=NULL, ...) {
   new$x = new$lon
   new$y = new$lat
 
-  newp = interp.surface.grid(obj=old, grid.list=new, ...)$z
+  newp = fields::interp.surface.grid(obj=old, grid.list=new, ...)$z
   newmap = if(!is.null(mask)) newp*mask else newp
 
   return(newmap)
 }
 
 
+#' @export
 regrid.array = function(object, old, new, mask=NULL, ...) {
   # new grid
   if(exists("LAT", where=new) & exists("LON", where=new)) {
@@ -133,11 +134,12 @@ regrid.array = function(object, old, new, mask=NULL, ...) {
 # regrid2 -----------------------------------------------------------------
 
 
-
 regrid2 = function(object, old, new, mask, linear=TRUE, extrap=FALSE, ...) {
   UseMethod("regrid2")
 }
 
+
+#' @export
 regrid2.matrix = function(object, old, new, mask=NULL, linear, extrap, ...) {
 
   if(is.null(mask)&!is.null(new$mask)) mask=new$mask
@@ -160,7 +162,7 @@ regrid2.matrix = function(object, old, new, mask=NULL, linear, extrap, ...) {
   new$x = new$lon
   new$y = new$lat
 
-  newp = interp(x=old$x, y=old$y, z=old$z, xo=new$x, yo=new$y,
+  newp = akima::interp(x=old$x, y=old$y, z=old$z, xo=new$x, yo=new$y,
                 linear=linear, extrap=extrap, ...)$z
   newmap = if(!is.null(mask)) newp*mask else newp
 
@@ -168,6 +170,7 @@ regrid2.matrix = function(object, old, new, mask=NULL, linear, extrap, ...) {
 }
 
 
+#' @export
 regrid2.array = function(object, old, new, mask=NULL, linear, extrap, ...) {
   # new grid
   if(exists("LAT", where=new) & exists("LON", where=new)) {
