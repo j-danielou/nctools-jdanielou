@@ -9,6 +9,20 @@ write.ncdf(x, filename, varid, dim, longname, units, prec = "float",
   dim.units, dim.longname, unlim = FALSE)
 }
 \arguments{
+\item{x}{An array to write to a ncdf file.}
+
+\item{filename}{The file to write.}
+
+\item{varid}{The name of the variable in the ncdf file.}
+
+\item{dim}{A list with the values of the dimensions. Names are taken from the list.}
+
+\item{longname}{The longname for the variable to be created.}
+
+\item{units}{The units for the variable to be created.}
+
+\item{prec}{The precision for the variable to be created.}
+
 \item{unlim}{}
 }
 \description{

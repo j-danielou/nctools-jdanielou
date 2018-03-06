@@ -20,6 +20,8 @@ the variables or dimensions.}
 it will overwrite the old file.}
 
 \item{verbose}{If TRUE, run verbosely.}
+
+\item{overwrite}{overwrite output file if already exists?}
 }
 \description{
 Renaming variable and dimensions in a netCDF File
