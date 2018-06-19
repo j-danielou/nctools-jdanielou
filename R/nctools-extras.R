@@ -9,13 +9,18 @@
 #' range values and "left" for [0,360] range (Pacific centered).
 #' @param verbose If TRUE, run verbosely.
 #' @param overwrite overwrite output file if already exists?
+#' @param compression
+#' @param mem.limit Maximum RAM size to be used per iteration.
+#' If the total size of the variable exceeds this value, the reshape is done iteratively.
+#' By default is 3072MB (3GB).
 #'
 #' @return
 #' @export
 #'
 #' @examples
 nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="center",
-                                  verbose=FALSE, overwrite=FALSE, compression=NA) {
+                                  verbose=FALSE, overwrite=FALSE, compression=NA,
+                                  mem.limit=3072) {
 
   if(missing(output) & !isTRUE(overwrite))
     stop("output file is missing. Set 'overwrite' to TRUE to make changes in the original file.")
@@ -36,6 +41,31 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
   ivar = nc$var[[varid]]
   lon = ivar$dim[[1]]$vals
   ndim = length(ivar$dim)
+  if(ndim<2) stop("Data must have at least two dimensions!")
+
+  cellLimit = (mem.limit*2^20)/8
+
+  bigData = (prod(ivar$size) > cellLimit) # 3GB by default
+
+  if(bigData) {
+    # useDim = which(prod(ivar$size)/ivar$size[-1] < cellLimit) + 1
+    # useDim = which.min(ivar$size[useDim])
+    # itDim  = ivar$size[useDim]
+
+    npiece = floor(prod(ivar$size)/cellLimit)
+    useDim = which(ivar$size[-1] >= npiece) + 1
+    useDim = which.min(ivar$size[useDim])
+    itDim  = max(ceiling(ivar$size[useDim]/npiece), 1)
+
+    starts = seq(from=1, to=ivar$size[useDim], by=itDim)
+    counts = diff(c(starts-1, ivar$size[useDim]))
+    npiece = length(starts)
+
+    start = rep(1, ndim)
+    count = rep(-1, ndim)
+
+  }
+
   pm = findPrimeMeridian(lon)
 
   pmCheck = is.null(pm) | identical(pm, primeMeridian)
@@ -55,13 +85,43 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
   if(!is.na(compression)) ivar$compression = compression
   ivar$chunksizes = NA
 
-  newvar = c(list(x=ncvar_get(nc, varid, collapse_degen=FALSE),
-                  drop=FALSE, i=ind), rep(TRUE, ndim-1))
-  newvar = do.call('[', newvar)
-  invisible(gc())
   ncNew = nc_create(filename=tmp, vars=ivar)
   on.exit(if(file.exists(tmp)) file.remove(tmp))
-  ncvar_put(ncNew, varid, newvar)
+
+  if(!bigData) {
+
+    newvar = c(list(x=ncvar_get(nc, varid, collapse_degen=FALSE),
+                    drop=FALSE, i=ind), rep(TRUE, ndim-1))
+    newvar = do.call('[', newvar)
+    ncvar_put(ncNew, varid, newvar)
+
+  } else {
+
+    message("Using big data method.")
+    pb = txtProgressBar(style=3)
+    setTxtProgressBar(pb, 0)
+
+
+    for(i in seq_len(npiece)) {
+
+      start[useDim] = starts[i]
+      count[useDim] = counts[i]
+
+      newvar = c(list(x=ncvar_get(nc, varid, collapse_degen=FALSE,
+                                  start=start, count=count),
+                      drop=FALSE, i=ind), rep(TRUE, ndim-1))
+      newvar = do.call('[', newvar)
+      invisible(gc())
+      ncvar_put(ncNew, varid, newvar, start=start, count=count)
+      nc_sync(ncNew)
+
+      pb = txtProgressBar(style=3)
+      setTxtProgressBar(pb, i/npiece)
+
+    }
+
+  }
+
   nc_close(ncNew)
   nc_close(nc)
 

@@ -6,7 +6,7 @@
 \usage{
 nc_changePrimeMeridian(filename, output, varid = NA,
   primeMeridian = "center", verbose = FALSE, overwrite = FALSE,
-  compression = NA)
+  compression = NA, mem.limit = 3072)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
@@ -21,6 +21,10 @@ range values and "left" for [0,360] range (Pacific centered).}
 \item{verbose}{If TRUE, run verbosely.}
 
 \item{overwrite}{overwrite output file if already exists?}
+
+\item{mem.limit}{Maximum RAM size to be used per iteration.
+If the total size of the variable exceeds this value, the reshape is done iteratively.
+By default is 3072MB (3GB).}
 }
 \description{
 Change the Prime Meridian of a variable in a ncdf file.
