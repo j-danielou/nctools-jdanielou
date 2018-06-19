@@ -415,6 +415,11 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
                      longname = varLongname, prec = oldVar$prec,
                      compression = oldVar$compression)
 
+  if(file.exists(output)) {
+    oTest = file.remove(output)
+    if(!oTest) stop(sprintf("Cannot write on %s.", output))
+  }
+
   ncNew = nc_create(filename=output, vars=newVar)
   ncvar_put(ncNew, varid, Y)
   nc_close(ncNew)
