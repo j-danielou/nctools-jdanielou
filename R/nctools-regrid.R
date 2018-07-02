@@ -1,10 +1,14 @@
 # TO_DO: check on dimension names more properly
 # TO_DO: integrate to the flow of other functions
+# TO_DO: check on output argument
 
 #' Regrid a variable from a ncdf file
 #'
 #' @param filename The filename of the original ncdf file.
-#' @param varid The name of the variable to extract.
+#' @param varid What variable to read the data from. Can be a string with the
+#' name of the variable or an object of class ncvar4. If set to NA,
+#' the function will determine if there is only one variable in the file and,
+#' if so, read from that, but if there are multiple variables in the file, an error is generated.
 #' @param dim A vector including the names of the dimensions to interpolate,
 #' e.g. c("longitude", "latitude")
 #' @param new A list including information of the new coordinates, the names
@@ -19,10 +23,35 @@
 #' @export
 #'
 #' @examples
-nc_regrid = function(filename, varid, dim, new, mask=NULL, output, fill=FALSE,
+nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, fill=FALSE,
                      radius=1, log=TRUE, ...) {
 
   nc =  nc_open(filename)
+  on.exit(nc_close(nc))
+
+  if(is.na(varid)) {
+    if(length(nc$var)==1) varid = nc$var[[1]]$name
+    msg = sprintf("Several variables found in %s, must specify 'varid'.", filename)
+    if(length(nc$var)>1) stop(msg)
+  }
+
+  if(inherits(varid, "ncvar4")) varid = varid$name
+
+  x = ncvar_get(nc, varid, collapse_degen = FALSE)
+  if(isTRUE(log)) x = log(x + 1e-4)
+
+  if(length(dim)!=2) stop("Regridding only possible for two dimensions.")
+
+  if(is.numeric(dim)) {
+    dim = ncvar_dim(nc, varid)[dim]
+  }
+
+  if(is.character(dim)) {
+    checkDim = dim %in% ncvar_dim(nc, varid)
+    if(!all(checkDim)) stop("Dimension names (dim) not found for 'varid'.")
+    checkDim = dim %in% names(new)
+    if(!all(checkDim)) stop("Dimension names (dim) not found in 'new'.")
+  }
 
   old = list(lon=ncvar_get(nc, dim[1]),
              lat=ncvar_get(nc, dim[2]))
@@ -34,8 +63,18 @@ nc_regrid = function(filename, varid, dim, new, mask=NULL, output, fill=FALSE,
                            primeMeridian = findPrimeMeridian(old$lon),
                            sort=FALSE)
 
-  x = ncvar_get(nc, varid, collapse_degen = FALSE)
-  if(isTRUE(log)) x = log(x + 1e-4)
+  sameGrid = setequal(old$lon, new$lon) & setequal(old$lat, new$lat)
+
+  nc_close(nc)
+  on.exit()
+
+  if(isTRUE(sameGrid)) {
+
+    message("Old and new grids are the same, nothing to do. Copying file to output destination.")
+    file.copy(from=filename, to=output)
+    return(invisible(output))
+
+  }
 
   if(!isTRUE(fill)) {
     x = regrid(object=x, old=old, new=new, mask=mask)
@@ -66,9 +105,8 @@ nc_regrid = function(filename, varid, dim, new, mask=NULL, output, fill=FALSE,
   ncvar_put(ncNew, varid, x)
   nc_close(ncNew)
 
-  nc_close(nc)
-
   return(invisible(output))
+
 }
 
 

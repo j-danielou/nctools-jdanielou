@@ -4,13 +4,16 @@
 \alias{nc_regrid}
 \title{Regrid a variable from a ncdf file}
 \usage{
-nc_regrid(filename, varid, dim, new, mask = NULL, output, fill = FALSE,
-  radius = 1, log = TRUE, ...)
+nc_regrid(filename, varid = NA, dim = 1:2, new, mask = NULL, output,
+  fill = FALSE, radius = 1, log = TRUE, ...)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
 
-\item{varid}{The name of the variable to extract.}
+\item{varid}{What variable to read the data from. Can be a string with the
+name of the variable or an object of class ncvar4. If set to NA,
+the function will determine if there is only one variable in the file and,
+if so, read from that, but if there are multiple variables in the file, an error is generated.}
 
 \item{dim}{A vector including the names of the dimensions to interpolate,
 e.g. c("longitude", "latitude")}
