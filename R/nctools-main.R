@@ -336,6 +336,11 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 
   if(is.null(output)) stop("You must specify an 'output'file.")
 
+  if(file.exists(output)) {
+    oTest = file.remove(output)
+    if(!oTest) stop(sprintf("Cannot write on %s.", output))
+  }
+
   FUN = match.fun(FUN)
 
   nc = nc_open(filename)
@@ -415,13 +420,8 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
                      longname = varLongname, prec = oldVar$prec,
                      compression = oldVar$compression)
 
-  if(file.exists(output)) {
-    oTest = file.remove(output)
-    if(!oTest) stop(sprintf("Cannot write on %s.", output))
-  }
-
   ncNew = nc_create(filename=output, vars=newVar)
-  ncvar_put(ncNew, varid, Y)
+  ncvar_put(nc=ncNew, varid=varName, vals=Y)
   nc_close(ncNew)
 
   return(invisible(output))
