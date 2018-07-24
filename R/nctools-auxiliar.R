@@ -75,7 +75,7 @@ ncvar_compression = function(nc, varid=NA) {
 
 #' Change the compression of the variables in a ncdf object.
 #'
-#' @param nc An open connection to a netCDF file as in nc_open(file).
+#' @param nc An open connection to a netCDF file as in nc_open(file, write=TRUE).
 #' @param varid Either the name of the variable or an ncvar object indicating whose compression value will be changed.
 #' If NA, all the variables will be changed to the new compression.
 #' @param compression The new compression value.
