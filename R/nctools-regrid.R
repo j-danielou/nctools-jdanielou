@@ -23,8 +23,8 @@
 #' @export
 #'
 #' @examples
-nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, fill=FALSE,
-                     radius=1, log=TRUE, ...) {
+nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, extrap=FALSE,
+                     log=TRUE, ...) {
 
   nc =  nc_open(filename)
   on.exit(nc_close(nc))
@@ -76,10 +76,10 @@ nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, fill=F
 
   }
 
-  if(!isTRUE(fill)) {
+  if(!isTRUE(extrap)) {
     x = regrid(object=x, old=old, new=new, mask=mask)
   } else {
-    x = regrid2(object=x, old=old, new=new, mask=mask, ...)
+    x = regrid2(object=x, old=old, new=new, mask=mask, linear=FALSE, extrap=extrap, ...)
   }
 
   newVar = nc$var[[varid]]
@@ -172,13 +172,13 @@ regrid.array = function(object, old, new, mask=NULL, ...) {
 # regrid2 -----------------------------------------------------------------
 
 
-regrid2 = function(object, old, new, mask, linear=TRUE, extrap=FALSE, ...) {
+regrid2 = function(object, old, new, mask, linear, extrap, ...) {
   UseMethod("regrid2")
 }
 
 
 #' @export
-regrid2.matrix = function(object, old, new, mask=NULL, linear, extrap, ...) {
+regrid2.matrix = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE, ...) {
 
   if(is.null(mask)&!is.null(new$mask)) mask=new$mask
   stopifnot(exists("lat", where=old), exists("lon", where=old))
@@ -209,7 +209,7 @@ regrid2.matrix = function(object, old, new, mask=NULL, linear, extrap, ...) {
 
 
 #' @export
-regrid2.array = function(object, old, new, mask=NULL, linear, extrap, ...) {
+regrid2.array = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE, ...) {
   # new grid
   if(exists("LAT", where=new) & exists("LON", where=new)) {
     stopifnot(is.matrix(new$LAT), is.matrix(new$LON), dim(new$LAT)==dim(new$LON))
