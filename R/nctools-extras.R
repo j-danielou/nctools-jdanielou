@@ -18,9 +18,9 @@
 #' @export
 #'
 #' @examples
-nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="center",
+nc_changePrimeMeridian = function(filename, output, varid=NA, MARGIN=1, primeMeridian="center",
                                   verbose=FALSE, overwrite=FALSE, compression=NA,
-                                  mem.limit=3072) {
+                                  mem.limit=3072, ignore.case=FALSE) {
 
   if(missing(output) & !isTRUE(overwrite))
     stop("output file is missing. Set 'overwrite' to TRUE to make changes in the original file.")
@@ -35,11 +35,28 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
   nc = nc_open(filename)
   on.exit(nc_close(nc))
 
-  if(is.na(varid) & (length(nc$var)>1)) stop("More than one variable, you must specify 'varid'.")
-  if(is.na(varid)) varid = names(nc$var)
+  if(is.na(varid)) {
+    if(length(nc$var)==1) varid = nc$var[[1]]$name
+    msg = sprintf("Several variables found in %s, must specify 'varid'.", filename)
+    if(length(nc$var)>1) stop(msg)
+  }
+
+  if(inherits(varid, "ncvar4")) varid = varid$name
+
+  dn = ncvar_dim(nc, varid, value=TRUE)
+  dnn = if(isTRUE(ignore.case)) tolower(names(dn)) else names(dn)
+
+  if(length(MARGIN)!=1) stop("MARGIN must be of length one (dim of 'longitude').")
+
+  if (is.character(MARGIN)) {
+    if(isTRUE(ignore.case)) MARGIN = tolower(MARGIN)
+    MARGIN = match(MARGIN, dnn)
+    if(anyNA(MARGIN))
+      stop("not all elements of 'MARGIN' are names of dimensions")
+  }
 
   ivar = nc$var[[varid]]
-  lon = ivar$dim[[1]]$vals
+  lon = ivar$dim[[MARGIN]]$vals
   ndim = length(ivar$dim)
   if(ndim<2) stop("Data must have at least two dimensions!")
 
@@ -48,12 +65,9 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
   bigData = (prod(ivar$size) > cellLimit) # 3GB by default
 
   if(bigData) {
-    # useDim = which(prod(ivar$size)/ivar$size[-1] < cellLimit) + 1
-    # useDim = which.min(ivar$size[useDim])
-    # itDim  = ivar$size[useDim]
 
     npiece = floor(prod(ivar$size)/cellLimit)
-    useDim = which(ivar$size[-1] >= npiece) + 1
+    useDim = setdiff(which(ivar$size >= npiece), MARGIN)
     useDim = which.min(ivar$size[useDim])
     itDim  = max(ceiling(ivar$size[useDim]/npiece), 1)
 
@@ -81,7 +95,7 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
 
   newlon = checkLongitude(lon, primeMeridian = primeMeridian)
   ind = sort(newlon, index.return=TRUE)$ix
-  ivar$dim[[1]]$vals = newlon[ind]
+  ivar$dim[[MARGIN]]$vals = newlon[ind]
   if(!is.na(compression)) ivar$compression = compression
   ivar$chunksizes = NA
 
@@ -91,7 +105,8 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
   if(!bigData) {
 
     newvar = c(list(x=ncvar_get(nc, varid, collapse_degen=FALSE),
-                    drop=FALSE, i=ind), rep(TRUE, ndim-1))
+                    drop=FALSE), rep(TRUE, ndim))
+    newvar[[MARGIN+2]] = ind
     newvar = do.call('[', newvar)
     ncvar_put(ncNew, varid, newvar)
 
@@ -109,7 +124,8 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, primeMeridian="cen
 
       newvar = c(list(x=ncvar_get(nc, varid, collapse_degen=FALSE,
                                   start=start, count=count),
-                      drop=FALSE, i=ind), rep(TRUE, ndim-1))
+                      drop=FALSE), rep(TRUE, ndim))
+      newvar[[MARGIN+2]] = ind
       newvar = do.call('[', newvar)
       invisible(gc())
       ncvar_put(ncNew, varid, newvar, start=start, count=count)
