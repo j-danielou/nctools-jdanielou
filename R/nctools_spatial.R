@@ -8,9 +8,7 @@
 #' @param ...
 #'
 #' @return
-#' @export
 #'
-#' @examples
 checkLongitude = function(x, primeMeridian="center", sort=FALSE, ...) {
 
   .longitude2Center = function(x, ...) {
@@ -42,9 +40,7 @@ checkLongitude = function(x, primeMeridian="center", sort=FALSE, ...) {
 #' @param x numeric vector of longitude values.
 #'
 #' @return
-#' @export
 #'
-#' @examples
 findPrimeMeridian = function(x) {
   if(any(x<0)) return("center")
   if(any(x>180)) return("left")

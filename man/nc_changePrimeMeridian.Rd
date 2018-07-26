@@ -4,9 +4,9 @@
 \alias{nc_changePrimeMeridian}
 \title{Change the Prime Meridian of a variable in a ncdf file.}
 \usage{
-nc_changePrimeMeridian(filename, output, varid = NA,
+nc_changePrimeMeridian(filename, output, varid = NA, MARGIN = 1,
   primeMeridian = "center", verbose = FALSE, overwrite = FALSE,
-  compression = NA, mem.limit = 3072)
+  compression = NA, mem.limit = 3072, ignore.case = FALSE)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}

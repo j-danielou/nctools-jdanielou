@@ -7,7 +7,7 @@
 ncvar_change_compression(nc, varid = NA, compression)
 }
 \arguments{
-\item{nc}{An open connection to a netCDF file as in nc_open(file).}
+\item{nc}{An open connection to a netCDF file as in nc_open(file, write=TRUE).}
 
 \item{varid}{Either the name of the variable or an ncvar object indicating whose compression value will be changed.
 If NA, all the variables will be changed to the new compression.}

@@ -5,7 +5,7 @@
 \title{Regrid a variable from a ncdf file}
 \usage{
 nc_regrid(filename, varid = NA, dim = 1:2, new, mask = NULL, output,
-  fill = FALSE, radius = 1, log = TRUE, ...)
+  extrap = FALSE, log = TRUE, ...)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
