@@ -67,9 +67,7 @@ ncvar_size = function(nc, varid=NULL) {
 #' @examples
 ncvar_compression = function(nc, varid=NA) {
   if(is.na(varid)) return(sapply(nc$var, FUN=.getCompression))
-  if(inherits(varid, "ncvar4")) varid = varid$name
-  if(!is.character(varid))
-    stop("varid must be a string or an object of class 'ncvar4'.")
+  varid = .checkVarid(varid=varid, nc=nc)
   return(.getCompression(nc$var[[varid]]))
 }
 
@@ -88,9 +86,7 @@ ncvar_change_compression = function(nc, varid=NA, compression) {
     nc$var = lapply(nc$var, FUN=.setCompression, compression=compression)
     return(nc)
   }
-  if(inherits(varid, "ncvar4")) varid = varid$name
-  if(!is.character(varid))
-    stop("varid must be a string or an object of class 'ncvar4'.")
+  varid = .checkVarid(varid=varid, nc=nc)
   nc$var[[varid]] = .setCompression(nc$var[[varid]], compression=compression)
   return(nc)
 }

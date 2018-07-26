@@ -15,6 +15,7 @@
 nc_extract = function(filename, varid, output) {
   nc = nc_open(filename)
   on.exit(nc_close(nc))
+  varid = .checkVarid(varid=varid, nc=nc)
   ncNew = nc_create(filename=output, vars=nc$var[[varid]])
   ncvar_put(ncNew, varid, ncvar_get(nc, varid, collapse_degen=FALSE))
   nc_close(ncNew)
@@ -123,11 +124,16 @@ nc_rcat = function(filenames, varid, output) {
     nc = nc_open(filenames[i])
     if(!any(ncdim_isUnlim(nc))) stop("Files don't have an unlimited dimension.")
     if(i==1) {
+      varid = .checkVarid(varid=varid, nc=nc)
       isUnlim  = ncdim_isUnlim(nc)[ncvar_dim(nc)[[varid]]]
       unlimDim = names(nc$dim)[which(ncdim_isUnlim(nc))]
       ncNew = nc_create(filename=output, vars=nc$var[[varid]])
       start = rep(1, length(isUnlim))
       refSize = nc$var[[varid]]$size[which(!isUnlim)]
+    }
+    if(!(varid %in% names(nc$var))) {
+      msg = sprintf("Variable '%s' not found in '%s'.", varid, nc$filename)
+      stop(msg)
     }
     ncSize = nc$var[[varid]]$size
     if(!identical(ncSize[which(!isUnlim)], refSize))
@@ -169,14 +175,7 @@ nc_subset = function(filename, varid, output, newvarid, compression,
   if(isTRUE(ignore.case)) names(bounds) = tolower(names(bounds))
   nc = nc_open(filename)
 
-  if(missing(varid)) {
-    msg = sprintf("ncdf file has more than one variable (%s), argument 'varid' must be specified.",
-                  paste(sQuote(names(nc$var)), collapse=", "))
-    if(length(nc$var)>1) stop(msg)
-    varid = names(nc$var)[1]
-  }
-
-  if(missing(newvarid)) newvarid = varid
+  varid = .checkVarid(varid=varid, nc=nc)
 
   dims = ncvar_dim(nc, varid, value=TRUE)
   dimNames = names(dims)
@@ -259,7 +258,7 @@ nc_subset = function(filename, varid, output, newvarid, compression,
 #' Make a dimension unlimited
 #'
 #' @param filename
-#' @param unlim Name of the variable to set as unlimited
+#' @param unlim Name of the dimension to set as unlimited
 #' @param output Name of the output file. If NULL,
 #' replace the original value
 #'
@@ -346,13 +345,7 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
   nc = nc_open(filename)
   on.exit(nc_close(nc))
 
-  if(is.na(varid)) {
-    if(length(nc$var)==1) varid = nc$var[[1]]$name
-    msg = sprintf("Several variables found in %s, must specify 'varid'.", filename)
-    if(length(nc$var)>1) stop(msg)
-  }
-
-  if(inherits(varid, "ncvar4")) varid = varid$name
+  varid = .checkVarid(varid=varid, nc=nc)
 
   X = ncvar_get(nc, varid, collapse_degen = FALSE)
 
@@ -452,9 +445,14 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 #' @export
 #'
 #' @examples
-write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
-                      missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
-                      dim.units, dim.longname, unlim=FALSE) {
+write_ncdf = function(x, filename, ...) {
+  UseMethod("write_ncdf")
+}
+
+#' @export
+write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="float",
+                              missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
+                              dim.units, dim.longname, unlim=FALSE, ...) {
 
   if(missing(dim)) dim = lapply(base::dim(x), seq_len)
 
@@ -493,4 +491,17 @@ write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
   return(invisible(filename))
 
 }
+
+#' @export
+write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
+                      missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
+                      dim.units, dim.longname, unlim=FALSE, ...) {
+  .Deprecated("write_ncdf")
+  write_ncdf.default(x=x, filename=filename, varid=varid, dim=dim, longname=longname,
+                     units=units, prec=prec, missval=missval, compression=compression,
+                     chunksizes=chunksizes, verbose=verbose, dim.units=dim.units,
+                     dim.longname=dim.longname, unlim=unlim, ...)
+}
+
+
 

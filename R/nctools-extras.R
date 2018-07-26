@@ -35,13 +35,7 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, MARGIN=1, primeMer
   nc = nc_open(filename)
   on.exit(nc_close(nc))
 
-  if(is.na(varid)) {
-    if(length(nc$var)==1) varid = nc$var[[1]]$name
-    msg = sprintf("Several variables found in %s, must specify 'varid'.", filename)
-    if(length(nc$var)>1) stop(msg)
-  }
-
-  if(inherits(varid, "ncvar4")) varid = varid$name
+  varid = .checkVarid(varid=varid, nc=nc)
 
   dn = ncvar_dim(nc, varid, value=TRUE)
   dnn = if(isTRUE(ignore.case)) tolower(names(dn)) else names(dn)

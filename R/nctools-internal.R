@@ -99,3 +99,34 @@
   x$chunksizes = NA
   return(x)
 }
+
+
+
+# Argument checking -------------------------------------------------------
+
+
+.checkVarid = function(varid, nc) {
+
+  if(missing(varid)) varid = NA
+
+  if(is.na(varid)) {
+    if(length(nc$var)==1) varid = nc$var[[1]]$name
+    msg = sprintf("Several variables found in %s, must specify 'varid'.", nc$filename)
+    if(length(nc$var)>1) stop(msg)
+  }
+
+  if(inherits(varid, "ncvar4")) varid = varid$name
+
+  if(!is.character(varid))
+    stop("varid must be a string or an object of class 'ncvar4'.")
+
+  varExists = varid %in% names(nc$var)
+
+  msg = sprintf("Variable '%s' not found in '%s'.", varid, nc$filename)
+  if(!varExists) stop(msg)
+
+  return(varid)
+
+}
+
+

@@ -29,13 +29,7 @@ nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, extrap
   nc =  nc_open(filename)
   on.exit(nc_close(nc))
 
-  if(is.na(varid)) {
-    if(length(nc$var)==1) varid = nc$var[[1]]$name
-    msg = sprintf("Several variables found in %s, must specify 'varid'.", filename)
-    if(length(nc$var)>1) stop(msg)
-  }
-
-  if(inherits(varid, "ncvar4")) varid = varid$name
+  varid = .checkVarid(varid=varid, nc=nc)
 
   x = ncvar_get(nc, varid, collapse_degen = FALSE)
   if(isTRUE(log)) x = log(x + 1e-4)
@@ -152,7 +146,7 @@ regrid.array = function(object, old, new, mask=NULL, ...) {
     nlon = as.numeric(nLON)
   } else {
     if(exists("lat", where=new) & exists("lon", where=new)) {
-      stopifnot(is.numeric(lat), !is.matrix(lat), is.numeric(lon), !is.matrix(lon))
+      stopifnot(is.numeric(new$lat), !is.matrix(new$lat), is.numeric(new$lon), !is.matrix(new$lon))
       nLAT = matrix(new$lat, ncol=length(new$lat), nrow=length(new$lon), byrow=TRUE)
       nLON = matrix(new$lon, ncol=length(new$lat), nrow=length(new$lon))
       nlat = as.numeric(nLAT)
@@ -219,7 +213,8 @@ regrid2.array = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE,
     nlon = as.numeric(nLON)
   } else {
     if(exists("lat", where=new) & exists("lon", where=new)) {
-      stopifnot(is.numeric(lat), !is.matrix(lat), is.numeric(lon), !is.matrix(lon))
+      stopifnot(is.numeric(new$lat), !is.matrix(new$lat),
+                is.numeric(new$lon), !is.matrix(new$lon))
       nLAT = matrix(new$lat, ncol=length(new$lat), nrow=length(new$lon), byrow=TRUE)
       nLON = matrix(new$lon, ncol=length(new$lat), nrow=length(new$lon))
       nlat = as.numeric(nLAT)
