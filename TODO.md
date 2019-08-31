@@ -1,12 +1,16 @@
 ## TO_DO
 
 ### URGENT
-one handler of varid (NA, exceptions) for all the functions. 
 uniform handling of files (temporal files, overwrite, etc.)
   check when filename==output, so temp file is written. Always?
   nctools::ncdim_unlim: it failes when files are open?
   ncrcat is closing files?
 
+check attributes are copied
+
+consistent check for 'output' argument, specially removing if already in existence.
+
+for nc_subset and related, check if something will be extracted, error otherwise.
 progress bar for nc_rcat and all functions
 
 conversion from HDF4 (if hdf2nc installed.)
