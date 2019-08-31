@@ -4,9 +4,9 @@
 \alias{nc_min}
 \title{Calculate sample minimum over the dimensions of a ncdf variable}
 \usage{
-nc_min(filename, varid, MARGIN = c(1, 2), na.rm = TRUE, output = NULL,
-  drop = TRUE, compression = NA, verbose = FALSE, force_v4 = TRUE,
-  ignore.case = FALSE)
+nc_min(filename, varid, MARGIN = c(1, 2), na.rm = TRUE,
+  output = NULL, drop = TRUE, compression = NA, verbose = FALSE,
+  force_v4 = TRUE, ignore.case = FALSE)
 }
 \arguments{
 \item{filename}{Name of the existing netCDF file to be opened.}

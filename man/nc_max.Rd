@@ -4,9 +4,9 @@
 \alias{nc_max}
 \title{Calculate sample maximum over the dimensions of a ncdf variable}
 \usage{
-nc_max(filename, varid, MARGIN = c(1, 2), na.rm = TRUE, output = NULL,
-  drop = TRUE, compression = NA, verbose = FALSE, force_v4 = TRUE,
-  ignore.case = FALSE)
+nc_max(filename, varid, MARGIN = c(1, 2), na.rm = TRUE,
+  output = NULL, drop = TRUE, compression = NA, verbose = FALSE,
+  force_v4 = TRUE, ignore.case = FALSE)
 }
 \arguments{
 \item{filename}{Name of the existing netCDF file to be opened.}

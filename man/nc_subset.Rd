@@ -4,8 +4,8 @@
 \alias{nc_subset}
 \title{Subset a ncdf variable}
 \usage{
-nc_subset(filename, varid, output, newvarid, compression, force_v4 = FALSE,
-  ..., ignore.case = FALSE)
+nc_subset(filename, varid, output, newvarid, compression,
+  force_v4 = FALSE, ..., ignore.case = FALSE)
 }
 \arguments{
 \item{filename}{The name of the ncdf file to subset.}

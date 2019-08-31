@@ -4,9 +4,10 @@
 \alias{nc_quantile}
 \title{Calculate sample quantiles over the dimensions of a ncdf variable}
 \usage{
-nc_quantile(filename, varid, MARGIN = c(1, 2), na.rm = TRUE, probs = c(0,
-  0.5, 1), output = NULL, drop = TRUE, compression = NA,
-  verbose = FALSE, force_v4 = TRUE, ignore.case = FALSE)
+nc_quantile(filename, varid, MARGIN = c(1, 2), na.rm = TRUE,
+  probs = c(0, 0.5, 1), output = NULL, drop = TRUE,
+  compression = NA, verbose = FALSE, force_v4 = TRUE,
+  ignore.case = FALSE)
 }
 \arguments{
 \item{filename}{Name of the existing netCDF file to be opened.}
