@@ -176,6 +176,7 @@ nc_subset = function(filename, varid, output, newvarid, compression,
   nc = nc_open(filename)
 
   varid = .checkVarid(varid=varid, nc=nc)
+  if(missing(newvarid)) newvarid = varid
 
   dims = ncvar_dim(nc, varid, value=TRUE)
   dimNames = names(dims)
@@ -195,10 +196,16 @@ nc_subset = function(filename, varid, output, newvarid, compression,
     if(is.null(bound)) return(default)
     if(diff(bound)<0) stop("Upper bound is lower than lower bound.")
     out = which((x>=bound[1]) & (x<=bound[2]))
-    if(length(out)==0)
-      stop(sprintf("All index are out of bounds: (%s).",
-                   paste(bound, collapse=", ")))
     return(FUN(out))
+  }
+
+  count = setNames(sapply(names(dims),
+                          function(x) .getIndex(dims[[x]], bounds[[x]], FUN=length, default=-1)),
+                   names(dims))
+
+  if(any(count==0)) {
+    msg = sprintf("All index are out of bounds: (%s).", paste(bound, collapse=", "))
+
   }
 
   index = setNames(lapply(names(dims),
@@ -207,10 +214,6 @@ nc_subset = function(filename, varid, output, newvarid, compression,
 
   start = setNames(sapply(names(dims),
                           function(x) .getIndex(dims[[x]], bounds[[x]], FUN=min, default=1)),
-                   names(dims))
-
-  count = setNames(sapply(names(dims),
-                          function(x) .getIndex(dims[[x]], bounds[[x]], FUN=length, default=-1)),
                    names(dims))
 
   x  = ncvar_get(nc, varid, collapse_degen=FALSE, start=start, count=count)
@@ -491,17 +494,5 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
   return(invisible(filename))
 
 }
-
-#' @export
-write.ncdf = function(x, filename, varid, dim, longname, units, prec="float",
-                      missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
-                      dim.units, dim.longname, unlim=FALSE, ...) {
-  .Deprecated("write_ncdf")
-  write_ncdf.default(x=x, filename=filename, varid=varid, dim=dim, longname=longname,
-                     units=units, prec=prec, missval=missval, compression=compression,
-                     chunksizes=chunksizes, verbose=verbose, dim.units=dim.units,
-                     dim.longname=dim.longname, unlim=unlim, ...)
-}
-
 
 
