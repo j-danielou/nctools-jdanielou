@@ -7,7 +7,7 @@
 nc_unlim(filename, unlim, output = NULL)
 }
 \arguments{
-\item{unlim}{Name of the variable to set as unlimited}
+\item{unlim}{Name of the dimension to set as unlimited}
 
 \item{output}{Name of the output file. If NULL,
 replace the original value}
