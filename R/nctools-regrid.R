@@ -24,7 +24,7 @@
 #'
 #' @examples
 nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, extrap=FALSE,
-                     log=TRUE, ...) {
+                     log=TRUE, keepRange=FALSE, ...) {
 
   nc =  nc_open(filename)
   on.exit(nc_close(nc))
@@ -71,9 +71,10 @@ nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, extrap
   }
 
   if(!isTRUE(extrap)) {
-    x = regrid(object=x, old=old, new=new, mask=mask)
+    x = regrid(object=x, old=old, new=new, mask=mask, keepRange=keepRange)
   } else {
-    x = regrid2(object=x, old=old, new=new, mask=mask, linear=FALSE, extrap=extrap, ...)
+    x = regrid2(object=x, old=old, new=new, mask=mask, linear=FALSE,
+                extrap=extrap, keepRange=keepRange, ...)
   }
 
   newVar = nc$var[[varid]]
@@ -106,12 +107,12 @@ nc_regrid = function(filename, varid=NA, dim=1:2, new, mask=NULL, output, extrap
 
 # regrid ------------------------------------------------------------------
 
-regrid = function(object, old, new, mask, ...) {
+regrid = function(object, old, new, mask, keepRange, ...) {
   UseMethod("regrid")
 }
 
 #' @export
-regrid.matrix = function(object, old, new, mask=NULL, ...) {
+regrid.matrix = function(object, old, new, mask=NULL, keepRange=FALSE, ...) {
 
   if(is.null(mask)&!is.null(new$mask)) mask=new$mask
   stopifnot(exists("lat", where=old), exists("lon", where=old))
@@ -131,12 +132,18 @@ regrid.matrix = function(object, old, new, mask=NULL, ...) {
   newp = fields::interp.surface.grid(obj=old, grid.list=new, ...)$z
   newmap = if(!is.null(mask)) newp*mask else newp
 
+  if(keepRange) {
+    rr = range(object, na.rm=TRUE)
+    newmap[newmap<rr[1]] = rr[1]
+    newmap[newmap>rr[2]] = rr[2]
+  }
+
   return(newmap)
 }
 
 
 #' @export
-regrid.array = function(object, old, new, mask=NULL, ...) {
+regrid.array = function(object, old, new, mask=NULL, keepRange=FALSE, ...) {
   # new grid
   if(exists("LAT", where=new) & exists("LON", where=new)) {
     stopifnot(is.matrix(new$LAT), is.matrix(new$LON), dim(new$LAT)==dim(new$LON))
@@ -157,7 +164,7 @@ regrid.array = function(object, old, new, mask=NULL, ...) {
   }
 
   ndim = seq_along(dim(object))[-c(1,2)]
-  newmap = apply(object, ndim, regrid, old=old, new=new, mask=mask, ...)
+  newmap = apply(object, ndim, regrid, old=old, new=new, mask=mask, keepRange=keepRange, ...)
   dim(newmap) = c(dim(nLAT), dim(object)[-c(1,2)])
   return(newmap)
 }
@@ -166,13 +173,13 @@ regrid.array = function(object, old, new, mask=NULL, ...) {
 # regrid2 -----------------------------------------------------------------
 
 
-regrid2 = function(object, old, new, mask, linear, extrap, ...) {
+regrid2 = function(object, old, new, mask, linear, extrap, keepRange, ...) {
   UseMethod("regrid2")
 }
 
 
 #' @export
-regrid2.matrix = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE, ...) {
+regrid2.matrix = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE, keepRange=FALSE, ...) {
 
   if(is.null(mask)&!is.null(new$mask)) mask=new$mask
   stopifnot(exists("lat", where=old), exists("lon", where=old))
@@ -182,28 +189,55 @@ regrid2.matrix = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE
   stopifnot(is.numeric(new$lat), !is.matrix(new$lat),
             is.numeric(new$lon), !is.matrix(new$lon))
 
-  old$x = rep(old$lon, ncol(object))
-  old$y = rep(old$lat, each=nrow(object))
-  old$z = as.numeric(object)
-
-  old = old[c("x","y","z")]
-
-  old = as.data.frame(old)
-  old = old[complete.cases(old), ]
-
   new$x = new$lon
   new$y = new$lat
 
+  old$x = rep(old$lon, ncol(object))
+  old$y = rep(old$lat, each=nrow(object))
+  old$z = as.numeric(object)
+  old = old[c("x","y","z")]
+  old = as.data.frame(old)
+
+  naobj = is.na(object)
+  xrow = sum(apply(naobj, 1, all, na.rm=TRUE))
+  xcol = sum(apply(naobj, 2, all, na.rm=TRUE))
+
+  ox = 1
+
+  if(xrow>0 | xcol>0) {
+
+    omask = 0 + !is.na(object)
+    oo    = data.frame(x=old$x, y=old$y, z=as.numeric(omask))
+    oo    = oo[complete.cases(oo), ]
+    nmask = akima::interp(x=oo$x, y=oo$y, z=oo$z, xo=new$x, yo=new$y,
+                          linear=linear, extrap=extrap, ...)$z
+    thr = 0.2
+    nmask =  (nmask < thr) & !is.na(mask)
+    nmask[is.na(mask)] = NA
+    irow = apply(nmask, 1, all, na.rm=TRUE)
+    icol = apply(nmask, 2, all, na.rm=TRUE)
+    ox = !outer(irow, icol, FUN = "|")
+    ox[!ox] = NA
+  }
+
+  old = old[complete.cases(old), ]
   newp = akima::interp(x=old$x, y=old$y, z=old$z, xo=new$x, yo=new$y,
                 linear=linear, extrap=extrap, ...)$z
   newmap = if(!is.null(mask)) newp*mask else newp
+  newmap = newmap*ox
+
+  if(keepRange) {
+    rr = range(object, na.rm=TRUE)
+    newmap[newmap<rr[1]] = rr[1]
+    newmap[newmap>rr[2]] = rr[2]
+  }
 
   return(newmap)
 }
 
 
 #' @export
-regrid2.array = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE, ...) {
+regrid2.array = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE, keepRange=FALSE, ...) {
   # new grid
   if(exists("LAT", where=new) & exists("LON", where=new)) {
     stopifnot(is.matrix(new$LAT), is.matrix(new$LON), dim(new$LAT)==dim(new$LON))
@@ -226,7 +260,7 @@ regrid2.array = function(object, old, new, mask=NULL, linear=TRUE, extrap=FALSE,
 
   ndim = seq_along(dim(object))[-c(1,2)]
   newmap = apply(object, ndim, regrid2, old=old, new=new, mask=mask,
-                 linear=linear, extrap=extrap, ...)
+                 linear=linear, extrap=extrap, keepRange=keepRange, ...)
   dim(newmap) = c(dim(nLAT), dim(object)[-c(1,2)])
   return(newmap)
 }
