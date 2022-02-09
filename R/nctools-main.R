@@ -357,7 +357,7 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 
   if (is.character(MARGIN)) {
     if(isTRUE(ignore.case)) MARGIN = tolower(MARGIN)
-    MARGIN <- match(MARGIN, dnn)
+    MARGIN = match(MARGIN, dnn)
     if(anyNA(MARGIN))
       stop("not all elements of 'MARGIN' are names of dimensions")
   }
