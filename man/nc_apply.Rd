@@ -4,10 +4,23 @@
 \alias{nc_apply}
 \title{Apply Functions Over Dimensions of a netCDF variable.}
 \usage{
-nc_apply(filename, varid, MARGIN, FUN, ..., output = NULL, drop = TRUE,
-  newdim = NULL, name = NULL, longname = NULL, units = NULL,
-  compression = NA, verbose = FALSE, force_v4 = TRUE,
-  ignore.case = FALSE)
+nc_apply(
+  filename,
+  varid,
+  MARGIN,
+  FUN,
+  ...,
+  output = NULL,
+  drop = TRUE,
+  newdim = NULL,
+  name = NULL,
+  longname = NULL,
+  units = NULL,
+  compression = NA,
+  verbose = FALSE,
+  force_v4 = TRUE,
+  ignore.case = FALSE
+)
 }
 \arguments{
 \item{filename}{Name of the existing netCDF file to be opened.}
@@ -44,6 +57,9 @@ application of FUN.}
 \item{force_v4}{If TRUE, then the created output file will always be in netcdf-4 format (which supports more features, but cannot be read by version 3 of the netcdf library). If FALSE, then the file is created in netcdf version 3 format UNLESS the user has requested features that require version 4. Deafult is TRUE.}
 
 \item{ignore.case}{If TRUE, ignore case in matching dimension names and MARGIN. Default is FALSE.}
+}
+\value{
+
 }
 \description{
 Apply Functions Over Dimensions of a netCDF variable.

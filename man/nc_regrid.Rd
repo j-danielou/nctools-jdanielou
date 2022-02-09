@@ -4,8 +4,18 @@
 \alias{nc_regrid}
 \title{Regrid a variable from a ncdf file}
 \usage{
-nc_regrid(filename, varid = NA, dim = 1:2, new, mask = NULL, output,
-  extrap = FALSE, log = TRUE, keepRange = FALSE, ...)
+nc_regrid(
+  filename,
+  varid = NA,
+  dim = 1:2,
+  new,
+  mask = NULL,
+  output,
+  extrap = FALSE,
+  log = TRUE,
+  keepRange = FALSE,
+  ...
+)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
@@ -27,6 +37,9 @@ consistent. The mask contains 1s in the area for valid data and NAs for the
 invalid ones (e.g. 1s in the ocean, NAs in the land).}
 
 \item{output}{The filename to save the regrided variable.}
+}
+\value{
+
 }
 \description{
 Regrid a variable from a ncdf file

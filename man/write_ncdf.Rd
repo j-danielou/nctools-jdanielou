@@ -23,6 +23,9 @@ write_ncdf(x, filename, ...)
 
 \item{unlim}{}
 }
+\value{
+
+}
 \description{
 Data output in ncdf format
 }

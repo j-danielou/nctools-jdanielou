@@ -4,8 +4,16 @@
 \alias{nc_subset}
 \title{Subset a ncdf variable}
 \usage{
-nc_subset(filename, varid, output, newvarid, compression,
-  force_v4 = FALSE, ..., ignore.case = FALSE)
+nc_subset(
+  filename,
+  varid,
+  output,
+  newvarid,
+  compression,
+  force_v4 = FALSE,
+  ...,
+  ignore.case = FALSE
+)
 }
 \arguments{
 \item{filename}{The name of the ncdf file to subset.}
@@ -23,6 +31,9 @@ nc_subset(filename, varid, output, newvarid, compression,
 \item{...}{the dimensions and bounds of values to subset.}
 
 \item{ignore.case}{Logical. Ignore case when matching the dimensions?}
+}
+\value{
+
 }
 \description{
 Subset a ncdf variable

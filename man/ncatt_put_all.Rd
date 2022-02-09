@@ -4,8 +4,15 @@
 \alias{ncatt_put_all}
 \title{Put several attributes to a ncdf object}
 \usage{
-ncatt_put_all(nc, varid, attname, attval, prec = NA, verbose = FALSE,
-  definemode = FALSE)
+ncatt_put_all(
+  nc,
+  varid,
+  attname,
+  attval,
+  prec = NA,
+  verbose = FALSE,
+  definemode = FALSE
+)
 }
 \arguments{
 \item{nc}{An open connection to a netCDF file as in nc_open(file).}
@@ -26,6 +33,9 @@ attribute.}
 the attribute is being created.}
 
 \item{definemode}{See 'definemode' in ncatt_put for details.}
+}
+\value{
+
 }
 \description{
 Put several attributes to a ncdf object

@@ -4,11 +4,24 @@
 \alias{nc_regrid2}
 \title{Title}
 \usage{
-nc_regrid2(filename, varid = NULL, dim, new, mask = NULL, output,
-  fill = FALSE, radius = 1, log = TRUE, ...)
+nc_regrid2(
+  filename,
+  varid = NULL,
+  dim,
+  new,
+  mask = NULL,
+  output,
+  fill = FALSE,
+  radius = 1,
+  log = TRUE,
+  ...
+)
 }
 \arguments{
 \item{...}{}
+}
+\value{
+
 }
 \description{
 Title

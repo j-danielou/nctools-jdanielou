@@ -4,8 +4,14 @@
 \alias{nc_rename}
 \title{Renaming variable and dimensions in a netCDF File}
 \usage{
-nc_rename(filename, oldnames, newnames, output, verbose = FALSE,
-  overwrite = FALSE)
+nc_rename(
+  filename,
+  oldnames,
+  newnames,
+  output,
+  verbose = FALSE,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{filename}{The filename of the original ncdf file.}
@@ -22,6 +28,9 @@ it will overwrite the old file.}
 \item{verbose}{If TRUE, run verbosely.}
 
 \item{overwrite}{overwrite output file if already exists?}
+}
+\value{
+
 }
 \description{
 Renaming variable and dimensions in a netCDF File

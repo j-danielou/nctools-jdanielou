@@ -11,6 +11,9 @@ ncvar_size(nc, varid = NULL)
 
 \item{varid}{}
 }
+\value{
+
+}
 \description{
 Get the size of the variables in a ncdf object.
 }
