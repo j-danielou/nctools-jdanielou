@@ -9,7 +9,12 @@ ncvar_dim(nc, varid = NULL, value = FALSE)
 \arguments{
 \item{nc}{An open connection to a netCDF file as in nc_open(file).}
 
-\item{value}{}
+\item{varid}{What variable to read the data from. Can be a string with the
+name of the variable or an object of class ncvar4. If set to NA,
+the function will determine if there is only one variable in the file and,
+if so, read from that, but if there are multiple variables in the file, an error is generated.}
+
+\item{value}{If TRUE, return a list with the value of the dimensions, not only the names of them.}
 }
 \value{
 

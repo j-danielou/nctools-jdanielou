@@ -11,7 +11,7 @@ nc_apply(
   FUN,
   ...,
   output = NULL,
-  drop = TRUE,
+  drop = FALSE,
   newdim = NULL,
   name = NULL,
   longname = NULL,

@@ -12,7 +12,8 @@ nc_subset(
   compression,
   force_v4 = FALSE,
   ...,
-  ignore.case = FALSE
+  ignore.case = FALSE,
+  drop = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ nc_subset(
 \item{...}{the dimensions and bounds of values to subset.}
 
 \item{ignore.case}{Logical. Ignore case when matching the dimensions?}
+
+\item{drop}{Logical. Drop degenered dimensions (i.e. dimensions of length 1)?}
 }
 \value{
 

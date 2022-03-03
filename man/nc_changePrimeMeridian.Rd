@@ -31,6 +31,8 @@ range values and "left" for [0,360] range (Pacific centered).}
 
 \item{overwrite}{overwrite output file if already exists?}
 
+\item{compression}{If set to an integer between 1 (least compression) and 9 (most compression), this enables compression for the variable as it is written to the file. Turning compression on forces the created file to be in netcdf version 4 format, which will not be compatible with older software that only reads netcdf version 3 files.}
+
 \item{mem.limit}{Maximum RAM size to be used per iteration.
 If the total size of the variable exceeds this value, the reshape is done iteratively.
 By default is 3072MB (3GB).}
