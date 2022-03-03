@@ -54,7 +54,7 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
 #' @export
 write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float",
                               missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
-                              dim.units, dim.longname, unlim=FALSE, ...) {
+                              dim.units, dim.longname, unlim=FALSE, global=list(), ...) {
 
   if(!is.list(global)) stop("'global' must be a list")
 
