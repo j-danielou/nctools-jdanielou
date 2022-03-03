@@ -21,7 +21,21 @@ write_ncdf(x, filename, ...)
 
 \item{prec}{The precision for the variable to be created.}
 
-\item{unlim}{}
+\item{missval}{Value set for NAs.}
+
+\item{compression}{If set to an integer between 1 (least compression) and 9 (most compression), this enables compression for the variable as it is written to the file. Turning compression on forces the created file to be in netcdf version 4 format, which will not be compatible with older software that only reads netcdf version 3 files.}
+
+\item{chunksizes}{For compression, the size of the chunks.}
+
+\item{verbose}{Do you want to know what's happening?}
+
+\item{dim.units}{Units of the dimensions}
+
+\item{dim.longname}{Longname of the dimensions.}
+
+\item{unlim}{Name of the unlimited dimension.}
+
+\item{global}{List of global attributes to be saved.}
 }
 \value{
 

@@ -1,7 +1,9 @@
 #' @export
 write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="float",
                               missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
-                              dim.units, dim.longname, unlim=FALSE, ...) {
+                              dim.units, dim.longname, unlim=FALSE, global=list(), ...) {
+
+  if(!is.list(global)) stop("'global' must be a list")
 
   if(missing(dim)) dim = lapply(base::dim(x), seq_len)
 
@@ -32,10 +34,18 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
                    compression=compression, chunksizes=chunksizes, verbose=verbose)
 
   ncNew = nc_create(filename=filename, vars=iVar, verbose=verbose)
+  on.exit(nc_close(ncNew))
 
   ncvar_put(ncNew, varid=iVar, vals=x, verbose=verbose)
 
-  nc_close(ncNew)
+  xcall = paste(gsub(x=gsub(x=capture.output(match.call()),
+                            pattern="^[ ]*", replacement=""), pattern="\"",
+                     replacement="'"), collapse="")
+  globalAtt = global
+  globalAtt$history = sprintf("File create on %s: %s [nctools version %s, %s]",
+                       date(), xcall, packageVersion("nctools"), R.version.string)
+  # create global attributes.
+  ncatt_put_all(ncNew, varid=0, attval=globalAtt)
 
   return(invisible(filename))
 
@@ -45,6 +55,8 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
 write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float",
                               missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
                               dim.units, dim.longname, unlim=FALSE, ...) {
+
+  if(!is.list(global)) stop("'global' must be a list")
 
   nvar = length(x)
 
@@ -61,7 +73,7 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
   if(!all(ind)) stop("All arrays to be added to the ncdf file must have the same dimension.")
 
   if(is.null(names(dim)))
-    dim = setNames(dim, paste("dim", seq_along(dim(x)), sep=""))
+    dim = setNames(dim, paste("dim", seq_along(dim(x[[1]])), sep=""))
 
   if(missing(longname)) longname = rep("", nvar)
   if(length(longname)==1) longname = rep(longname, nvar)
@@ -98,10 +110,20 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
   }
 
   ncNew = nc_create(filename=filename, vars=iVar, verbose=verbose)
+  on.exit(nc_close(ncNew))
 
   for(i in seq_along(x)) ncvar_put(ncNew, varid=iVar[[i]], vals=x[[i]], verbose=verbose)
 
-  nc_close(ncNew)
+  xcall = paste(gsub(x=gsub(x=capture.output(match.call()),
+                            pattern="^[ ]*", replacement=""), pattern="\"",
+                     replacement="'"), collapse="")
+
+  globalAtt = global
+  globalAtt$history = sprintf("File create on %s: %s [nctools version %s, %s]",
+                              date(), xcall, packageVersion("nctools"), R.version.string)
+  # create global attributes.
+  ncatt_put_all(ncNew, varid=0, attval=globalAtt)
+
 
   return(invisible(filename))
 
