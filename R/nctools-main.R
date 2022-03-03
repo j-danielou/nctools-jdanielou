@@ -163,17 +163,21 @@ nc_rcat = function(filenames, varid, output) {
 #' @param force_v4 Logical. Should the resulting file be ncdf v4?
 #' @param ... the dimensions and bounds of values to subset.
 #' @param ignore.case Logical. Ignore case when matching the dimensions?
+#' @param drop Logical. Drop degenered dimensions (i.e. dimensions of length 1)?
 #'
 #' @return
 #' @export
 #'
 #' @examples
 nc_subset = function(filename, varid, output, newvarid, compression,
-                     force_v4=FALSE, ..., ignore.case=FALSE) {
+                     force_v4=FALSE, ..., ignore.case=FALSE, drop=FALSE) {
 
   bounds = list(...)
+  bounds = lapply(bounds, FUN = function(x) if(length(x)==1) return(rep(x, 2)) else return(x))
+
   if(isTRUE(ignore.case)) names(bounds) = tolower(names(bounds))
   nc = nc_open(filename)
+  on.exit(nc_close(nc))
 
   varid = .checkVarid(varid=varid, nc=nc)
   if(missing(newvarid)) newvarid = varid
@@ -226,6 +230,7 @@ nc_subset = function(filename, varid, output, newvarid, compression,
 
   .modifyDim = function(x, dim, index) {
     if(isTRUE(index[[x]])) return(dim[[x]])
+    if(length(index[[x]])==1 & isTRUE(drop)) return(NULL)
     dim[[x]]$size = length(index[[x]])
     dim[[x]]$len = length(index[[x]])
     dim[[x]]$vals = dim[[x]]$vals[index[[x]]]
@@ -233,9 +238,19 @@ nc_subset = function(filename, varid, output, newvarid, compression,
   }
 
   newVar$dim = lapply(names(nc$dim), FUN=.modifyDim, dim=nc$dim, index=index)
-  newVar$dim = newVar$dim[newVar$dimids + 1]
+  ind = newVar$dimids + 1
+  if(isTRUE(drop)) ind = ind[dim(x)>1]
+  newVar$dim = newVar$dim[ind]
+  if(isTRUE(drop)) x = drop(x)
+
+  newVar = ncvar_def(name=newVar$name, units = newVar$units,
+                     missval = newVar$missval, dim = newVar$dim,
+                     longname = newVar$longname, prec = newVar$prec,
+                     compression = newVar$compression)
 
   ncNew = nc_create(filename=output, vars=newVar, force_v4=force_v4)
+  on.exit(nc_close(ncNew), add=TRUE)
+
   ncvar_put(ncNew, newvarid, x)
 
   globalAtt = ncatt_get(nc, varid=0)
@@ -244,15 +259,16 @@ nc_subset = function(filename, varid, output, newvarid, compression,
                      pattern="^[ ]*", replacement=""), pattern="\"",
                replacement="'"), collapse="")
 
-  globalAtt$history = sprintf("%s: %s [nctools version %s, %s]",
-                              date(), xcall, packageVersion("nctools"), R.version.string)
+  oldHistory = if(!is.null(globalAtt$history)) globalAtt$history else NULL
+
+  newHistory = sprintf("%s: %s [nctools version %s, %s]",
+                       date(), xcall, packageVersion("nctools"), R.version.string)
+
+  globalAtt$history = paste(c(oldHistory, newHistory), collapse="\n")
 
   # copy global attributes from original nc file.
   ncatt_put_all(ncNew, varid=0, attval=globalAtt)
 
-  nc_close(ncNew)
-
-  nc_close(nc)
 
   return(invisible(output))
 }
@@ -328,7 +344,7 @@ nc_unlim = function(filename, unlim, output=NULL) {
 #' @export
 #'
 #' @examples
-nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
+nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=FALSE,
                     newdim = NULL, name=NULL, longname=NULL, units=NULL,
                     compression=NA, verbose=FALSE, force_v4=TRUE,
                     ignore.case=FALSE) {
@@ -436,13 +452,14 @@ nc_apply = function(filename, varid, MARGIN, FUN, ..., output=NULL, drop=TRUE,
 #' @param longname The longname for the variable to be created.
 #' @param units The units for the variable to be created.
 #' @param prec The precision for the variable to be created.
-#' @param missval
-#' @param compression
-#' @param chunksizes
-#' @param verbose
-#' @param dim.units
-#' @param dim.longname
-#' @param unlim
+#' @param missval Value set for NAs.
+#' @param compression If set to an integer between 1 (least compression) and 9 (most compression), this enables compression for the variable as it is written to the file. Turning compression on forces the created file to be in netcdf version 4 format, which will not be compatible with older software that only reads netcdf version 3 files.
+#' @param chunksizes For compression, the size of the chunks.
+#' @param verbose Do you want to know what's happening?
+#' @param dim.units Units of the dimensions
+#' @param dim.longname Longname of the dimensions.
+#' @param unlim Name of the unlimited dimension.
+#' @param global List of global attributes to be saved.
 #'
 #' @return
 #' @export
