@@ -1,7 +1,8 @@
 #' @export
 write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="float",
                               missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
-                              dim.units, dim.longname, unlim=FALSE, global=list(), ...) {
+                              dim.units, dim.longname, unlim=FALSE, global=list(),
+                              force_v4=FALSE, ...) {
 
   if(!is.list(global)) stop("'global' must be a list")
 
@@ -33,7 +34,7 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
   iVar = ncvar_def(name=varid, units=units, dim=dims, prec=prec ,missval=missval, longname=longname,
                    compression=compression, chunksizes=chunksizes, verbose=verbose)
 
-  ncNew = nc_create(filename=filename, vars=iVar, verbose=verbose)
+  ncNew = nc_create(filename=filename, vars=iVar, force_v4=force_v4, verbose=verbose)
   on.exit(nc_close(ncNew))
 
   ncvar_put(ncNew, varid=iVar, vals=x, verbose=verbose)
@@ -53,8 +54,9 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
 
 #' @export
 write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float",
-                              missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
-                              dim.units, dim.longname, unlim=FALSE, global=list(), ...) {
+                           missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
+                           dim.units, dim.longname, unlim=FALSE, global=list(),
+                           force_v4=FALSE, ...) {
 
   if(!is.list(global)) stop("'global' must be a list")
 
@@ -109,7 +111,7 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
 
   }
 
-  ncNew = nc_create(filename=filename, vars=iVar, verbose=verbose)
+  ncNew = nc_create(filename=filename, vars=iVar, force_v4=force_v4, verbose=verbose)
   on.exit(nc_close(ncNew))
 
   for(i in seq_along(x)) ncvar_put(ncNew, varid=iVar[[i]], vals=x[[i]], verbose=verbose)
