@@ -129,4 +129,16 @@
 
 }
 
-
+# match and array with a dimsize vector.
+.getDimensions = function(x, dimsize) {
+  mydim = dim(x)
+  out = NA_real_*numeric(length(mydim))
+  for(i in seq_along(mydim)) {
+    ind = which(dimsize %in% mydim[i])
+    if(length(ind)<1) stop("Array incompatible with dimension units.")
+    if(length(ind)>1) ind = min(ind)
+    out[i] = ind
+    dimsize[seq_len(ind)] = -1
+  }
+  return(out)
+}

@@ -65,14 +65,20 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
   if(missing(varid)) varid = names(x)
   if(length(varid)!=nvar) stop("One 'varid' per variable must be provided")
 
-  if(missing(dim)) dim = lapply(base::dim(x[[1]]), seq_len)
+  if(missing(dim)) {
+    sdim = sapply(x, FUN = function(x) length(dim(x)))
+    ind  = which.max(sdim)
+    dim = lapply(base::dim(x[[ind]]), seq_len)
+  }
 
-  if(length(dim)!=length(dim(x[[1]])))
-    stop("dim argument does not match data dimension.")
+  thedims = lapply(x, FUN=.getDimensions, dimsize = sapply(dim, FUN=length))
 
-  ind = lapply(x, dim)
-  ind = sapply(ind, FUN = identical, y=ind[[1]])
-  if(!all(ind)) stop("All arrays to be added to the ncdf file must have the same dimension.")
+  # if(length(dim)!=length(dim(x[[1]])))
+  #   stop("dim argument does not match data dimension.")
+
+  # ind = lapply(x, dim)
+  # ind = sapply(ind, FUN = identical, y=ind[[1]])
+  # if(!all(ind)) stop("All arrays to be added to the ncdf file must have the same dimension.")
 
   if(is.null(names(dim)))
     dim = setNames(dim, paste("dim", seq_along(dim(x[[1]])), sep=""))
@@ -106,7 +112,7 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
 
   for(i in seq_along(x)) {
 
-    iVar[[i]] = ncvar_def(name=varid[i], units=units[i], dim=dims, prec=prec[i], missval=missval,
+    iVar[[i]] = ncvar_def(name=varid[i], units=units[i], dim=dims[thedims[[i]]], prec=prec[i], missval=missval,
                           longname=longname[i], compression=compression, chunksizes=chunksizes, verbose=verbose)
 
   }
