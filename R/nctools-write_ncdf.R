@@ -136,3 +136,12 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
   return(invisible(filename))
 
 }
+
+#' @export
+write_ncdf.grid = function(x, filename, ...) {
+  output = list(mask=x$mask, area=x$area)
+  dim = list(longitude=x$lon, latitude=x$lat)
+  write_ncdf(x=output, filename=filename, dim=dim, units=c(mask="land/ocean (0/1)", "km2"),
+             dim.units=c(longitude="degrees north", latitude="degrees east"))
+  return(invisible(NULL))
+}

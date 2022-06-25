@@ -16,4 +16,4 @@ License: GPL-3
 URL: http://roliveros-ramos.github.io/nctools
 BugReports: https://github.com/roliveros-ramos/nctools/issues
 ByteCompile: TRUE
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
