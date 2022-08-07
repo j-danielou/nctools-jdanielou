@@ -16,9 +16,6 @@ if so, read from that, but if there are multiple variables in the file, an error
 
 \item{value}{If TRUE, return a list with the value of the dimensions, not only the names of them.}
 }
-\value{
-
-}
 \description{
 Get dimension names for each variable in a ncdf file
 }

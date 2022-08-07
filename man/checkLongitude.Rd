@@ -16,9 +16,6 @@ range values and "left" for [0,360] range (Pacific centered).}
 
 \item{...}{}
 }
-\value{
-
-}
 \description{
 Check and correct Longitude values given the position of the Prime Meridian (International Reference Meridian)
 }

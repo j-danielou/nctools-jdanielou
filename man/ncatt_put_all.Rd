@@ -34,9 +34,6 @@ the attribute is being created.}
 
 \item{definemode}{See 'definemode' in ncatt_put for details.}
 }
-\value{
-
-}
 \description{
 Put several attributes to a ncdf object
 }

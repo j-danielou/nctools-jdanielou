@@ -37,9 +37,6 @@ range values and "left" for [0,360] range (Pacific centered).}
 If the total size of the variable exceeds this value, the reshape is done iteratively.
 By default is 3072MB (3GB).}
 }
-\value{
-
-}
 \description{
 Change the Prime Meridian of a variable in a ncdf file.
 }

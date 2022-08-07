@@ -42,9 +42,6 @@ It can be a character vector selecting dimension names. By default, the first tw
 
 \item{ignore.case}{If TRUE, ignore case in matching dimension names and MARGIN. Default is FALSE.}
 }
-\value{
-
-}
 \description{
 Calculate sample minimum over the dimensions of a ncdf variable
 }

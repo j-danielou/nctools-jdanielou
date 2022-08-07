@@ -20,9 +20,6 @@ nc_regrid2(
 \arguments{
 \item{...}{}
 }
-\value{
-
-}
 \description{
 Title
 }

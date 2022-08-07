@@ -38,9 +38,6 @@ invalid ones (e.g. 1s in the ocean, NAs in the land).}
 
 \item{output}{The filename to save the regrided variable.}
 }
-\value{
-
-}
 \description{
 Regrid a variable from a ncdf file
 }

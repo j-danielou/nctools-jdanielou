@@ -58,9 +58,6 @@ application of FUN.}
 
 \item{ignore.case}{If TRUE, ignore case in matching dimension names and MARGIN. Default is FALSE.}
 }
-\value{
-
-}
 \description{
 Apply Functions Over Dimensions of a netCDF variable.
 }

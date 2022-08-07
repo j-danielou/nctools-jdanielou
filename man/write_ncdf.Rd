@@ -37,9 +37,6 @@ write_ncdf(x, filename, ...)
 
 \item{global}{List of global attributes to be saved.}
 }
-\value{
-
-}
 \description{
 Data output in ncdf format
 }

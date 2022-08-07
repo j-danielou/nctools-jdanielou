@@ -14,9 +14,6 @@ If NA, all the variables will be changed to the new compression.}
 
 \item{compression}{The new compression value.}
 }
-\value{
-
-}
 \description{
 Change the compression of the variables in a ncdf object.
 }

@@ -12,9 +12,6 @@ nc_unlim(filename, unlim, output = NULL)
 \item{output}{Name of the output file. If NULL,
 replace the original value}
 }
-\value{
-
-}
 \description{
 Make a dimension unlimited
 }

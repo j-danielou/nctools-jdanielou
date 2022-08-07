@@ -9,9 +9,6 @@ findPrimeMeridian(x)
 \arguments{
 \item{x}{numeric vector of longitude values.}
 }
-\value{
-
-}
 \description{
 Find the Prime Meridian
 }

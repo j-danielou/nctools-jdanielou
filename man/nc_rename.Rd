@@ -29,9 +29,6 @@ it will overwrite the old file.}
 
 \item{overwrite}{overwrite output file if already exists?}
 }
-\value{
-
-}
 \description{
 Renaming variable and dimensions in a netCDF File
 }

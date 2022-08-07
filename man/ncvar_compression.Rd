@@ -11,9 +11,6 @@ ncvar_compression(nc, varid = NA)
 
 \item{varid}{Either the name of the variable or an ncvar object.}
 }
-\value{
-
-}
 \description{
 Get the compression of the variables in a ncdf object.
 }

@@ -35,9 +35,6 @@ nc_subset(
 
 \item{drop}{Logical. Drop degenered dimensions (i.e. dimensions of length 1)?}
 }
-\value{
-
-}
 \description{
 Subset a ncdf variable
 }

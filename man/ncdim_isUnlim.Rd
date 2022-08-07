@@ -9,9 +9,6 @@ ncdim_isUnlim(nc)
 \arguments{
 \item{nc}{An open connection to a netCDF file as in nc_open(file).}
 }
-\value{
-
-}
 \description{
 Is the dimention unlimited?
 }
