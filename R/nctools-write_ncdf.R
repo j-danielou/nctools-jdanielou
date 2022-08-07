@@ -1,6 +1,6 @@
 #' @export
 write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="float",
-                              missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
+                              missval=NA, compression=9, chunksizes=NA, verbose=FALSE,
                               dim.units, dim.longname, unlim=FALSE, global=list(),
                               force_v4=FALSE, ...) {
 
@@ -47,6 +47,8 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
                        date(), xcall, packageVersion("nctools"), R.version.string)
   # create global attributes.
   ncatt_put_all(ncNew, varid=0, attval=globalAtt)
+  nc_close(ncNew)
+  on.exit()
 
   return(invisible(filename))
 
@@ -54,7 +56,7 @@ write_ncdf.default = function(x, filename, varid, dim, longname, units, prec="fl
 
 #' @export
 write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float",
-                           missval=-9999, compression=9, chunksizes=NA, verbose=FALSE,
+                           missval=NA, compression=9, chunksizes=NA, verbose=FALSE,
                            dim.units, dim.longname, unlim=FALSE, global=list(),
                            force_v4=FALSE, ...) {
 
@@ -131,17 +133,9 @@ write_ncdf.list = function(x, filename, varid, dim, longname, units, prec="float
                               date(), xcall, packageVersion("nctools"), R.version.string)
   # create global attributes.
   ncatt_put_all(ncNew, varid=0, attval=globalAtt)
-
+  nc_close(ncNew)
+  on.exit()
 
   return(invisible(filename))
 
-}
-
-#' @export
-write_ncdf.grid = function(x, filename, ...) {
-  output = list(mask=x$mask, area=x$area)
-  dim = list(longitude=x$lon, latitude=x$lat)
-  write_ncdf(x=output, filename=filename, dim=dim, units=c(mask="land/ocean (0/1)", "km2"),
-             dim.units=c(longitude="degrees north", latitude="degrees east"))
-  return(invisible(NULL))
 }
