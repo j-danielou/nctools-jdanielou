@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @examples
-nc_changePrimeMeridian = function(filename, output, varid=NA, MARGIN=1, primeMeridian="center",
+nc_changePrimeMeridian_v2 = function(filename, output, varid=NA, MARGIN=1, primeMeridian="center",
                                   verbose=FALSE, overwrite=FALSE, compression=NA,
                                   mem.limit=3072, ignore.case=FALSE) {
 
@@ -36,7 +36,10 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, MARGIN=1, primeMer
   on.exit(nc_close(nc))
 
   varid = .checkVarid(varid=varid, nc=nc)
-
+  gloAtt = ncatt_get(nc, varid = 0)
+  varAtt = ncatt_get(nc, varid = varid)
+  varAtt[["_FillValue"]] = NULL
+  
   dn = ncvar_dim(nc, varid, value=TRUE)
   dnn = if(isTRUE(ignore.case)) tolower(names(dn)) else names(dn)
 
@@ -129,7 +132,8 @@ nc_changePrimeMeridian = function(filename, output, varid=NA, MARGIN=1, primeMer
       setTxtProgressBar(pb, i/npiece)
 
     }
-
+    ncatt_put_all(ncNew, varid=0, attval=gloAtt)
+    ncatt_put_all(ncNew, varid=varid, attval=varAtt)
   }
 
   nc_close(ncNew)
