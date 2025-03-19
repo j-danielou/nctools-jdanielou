@@ -123,11 +123,14 @@ nc_rename = function(filename, oldnames, newnames, output, verbose=FALSE, overwr
 #' @export
 #'
 #' @examples
-nc_rcat = function(filenames, varid, output) {
+nc_rcat_v2 = function(filenames, varid, output) {
   # add function validation
   # check for unlim
   for(i in seq_along(filenames)) {
     nc = nc_open(filenames[i])
+    gloAtt = ncatt_get(nc, varid = 0)
+    varAtt = ncatt_get(nc, varid = varid)
+    varAtt[["_FillValue"]] = NULL
     if(!any(ncdim_isUnlim(nc))) stop("Files don't have an unlimited dimension.")
     if(i==1) {
       varid = .checkVarid(varid=varid, nc=nc)
@@ -152,12 +155,13 @@ nc_rcat = function(filenames, varid, output) {
     ncvar_put(ncNew, varid=unlimDim, ncvar_get(nc, varid=unlimDim),
               start=start[which(isUnlim)], count=ncSize[which(isUnlim)])
     start = start + ncSize*isUnlim
+    ncatt_put_all(ncNew, varid=0, attval=gloAtt)
+    ncatt_put_all(ncNew, varid=varid, attval=varAtt)
     nc_close(nc)
   }
   nc_close(ncNew)
   return(invisible(output))
 }
-
 
 #' Subset a ncdf variable
 #'
